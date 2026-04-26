@@ -1,0 +1,97 @@
+@baseUrl=http://127.0.0.1:3030/api/car
+
+### Fetch car list
+get {{baseUrl}}
+
+### Filter by txt
+get {{baseUrl}}?filterBy[txt]=v
+
+### Filter by minSpeed
+
+get {{baseUrl}}?filterBy[minSpeed]=100
+
+### Filter by type
+
+get {{baseUrl}}?filterBy[type]=Electric
+
+### Filter by txt & minSpeed
+
+get {{baseUrl}}?filterBy[txt]=y&filterBy[minSpeed]=100
+
+### Sort by maxSpeed
+
+get {{baseUrl}}?sortBy[sortField]=maxSpeed
+
+### Sort by maxSpeed desc.
+
+get {{baseUrl}}?sortBy[sortField]=maxSpeed&sortBy[sortDir]=-1
+
+### Sort by make
+
+get {{baseUrl}}?sortBy[sortField]=make
+
+### Sort by make descending
+
+get {{baseUrl}}?sortBy[sortField]=make&sortBy[sortDir]=-1
+
+### Fetch a single car
+
+get {{baseUrl}}/sdj75
+
+### Delete a bug
+
+delete {{baseUrl}}/CrZsV
+
+### Add a bug
+
+post {{baseUrl}}
+content-type: application/json
+
+{
+    "make": "Doodoo",
+    "maxSpeed": 40,
+    "type": "Gasoline"
+}
+
+### Update a bug
+
+patch {{baseUrl}}/CrZsV
+content-type: application/json
+
+{
+    "_id": "CrZsV",
+    "make": "Doodoo",
+    "maxSpeed": 20,
+    "type": "Hybrid"
+}
+
+### Signup
+
+post http://127.0.0.1:3030/api/auth/signup
+content-type: application/json
+
+{
+    "username": "bobo",
+    "fullname": "bobo",
+    "password": "bobo"
+}
+
+### Login
+
+post http://127.0.0.1:3030/api/auth/login
+content-type: application/json
+
+{
+    "username": "cc",
+    "password": "cc"
+}
+
+### Logout
+
+post http://127.0.0.1:3030/api/auth/logout
+content-type: application/json
+
+{
+    "username": "cc",
+    "password": "cc"
+}

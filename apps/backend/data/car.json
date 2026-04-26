@@ -1,0 +1,42 @@
+[
+  {
+    "_id": "dhed6w",
+    "createdAt": 1713500000000,
+    "updatedAt": 1713600000000,
+    "make": "Toyoyo",
+    "maxSpeed": 120,
+    "type": "Electric"
+  },
+  {
+    "_id": "sdj75",
+    "createdAt": 1717500000000,
+    "updatedAt": 1718500000000,
+    "make": "Volbo",
+    "maxSpeed": 210,
+    "type": "Hybrid"
+  },
+  {
+    "_id": "3d8kd",
+    "createdAt": 1713900000000,
+    "updatedAt": 1713990000000,
+    "make": "Subali",
+    "maxSpeed": 60,
+    "type": "Gasoline"
+  },
+  {
+    "_id": "5SFTu",
+    "createdAt": 1777126249025,
+    "updatedAt": 1777126249026,
+    "make": "Bobo",
+    "maxSpeed": 4,
+    "type": "Diesel"
+  },
+  {
+    "_id": "kdJTD",
+    "createdAt": 1777126525719,
+    "updatedAt": 1777126726034,
+    "make": "Doodoo",
+    "maxSpeed": 20,
+    "type": "Hybrid"
+  }
+]

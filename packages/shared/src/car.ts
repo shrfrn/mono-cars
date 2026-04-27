@@ -26,7 +26,7 @@ export const CarFilterSchema = z.object({
 export const CarSortFieldSchema = z.enum(['make', 'maxSpeed']).optional()
 export const CarSortSchema = z.object({
     sortField: CarSortFieldSchema,
-    sortDir: z.preprocess(val => val || 1, z.union([z.literal(1), z.literal(-1)])),
+    sortDir: z.preprocess(val => Number(val) || 1, z.union([z.literal(1), z.literal(-1)])),
 })
 
 export const CarQueryOptionsSchema = z.object({
@@ -42,6 +42,7 @@ export const CarParamsSchema = z.object({
 
 export type Car = z.infer<typeof CarSchema>
 export type CarType = z.infer<typeof CarTypeSchema>
+export type CarPublic = z.infer<typeof CarPublicSchema>
 
 export type CarBase = z.infer<typeof CarBaseSchema>
 export type CarBaseInput = z.input<typeof CarBaseSchema>

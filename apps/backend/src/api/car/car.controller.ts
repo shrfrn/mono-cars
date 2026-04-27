@@ -7,7 +7,7 @@ import { carService } from './car.service.js'
 
 export async function getCars(req: Request<{}, {}, {}, CarQueryOptions>, res: Response) {
 	try {
-		const cars = await carService.query(req.query)
+		const cars = await carService.query(res.locals.query)
         const valdated = CarPublicSchema.array().parse(cars)
 		res.json(valdated)
 	} catch (err) {
@@ -18,7 +18,7 @@ export async function getCars(req: Request<{}, {}, {}, CarQueryOptions>, res: Re
 
 export async function getCarById(req: Request<CarParams, Car>, res: Response) {
 	try {
-		const carId = req.params.id
+		const carId = res.locals.params.id
 		const car = await carService.getById(carId)
         const valdated = CarPublicSchema.parse(car)
         
@@ -30,7 +30,7 @@ export async function getCarById(req: Request<CarParams, Car>, res: Response) {
 }
 
 export async function postCar(req: Request<{}, Car, CarBase, {}>, res: Response) {
-    const car = req.body
+    const car = res.locals.body
 	try {
 		const addedCar = await carService.post(car)
         const valdated = CarPublicSchema.parse(addedCar)
@@ -42,7 +42,7 @@ export async function postCar(req: Request<{}, Car, CarBase, {}>, res: Response)
 }
 
 export async function patchCar(req: Request<CarParams, Car, CarPatch>, res: Response) {
-    const car = req.body
+    const car = res.locals.body
 
 	try {
 		const updatedCar = await carService.patch(car)
@@ -56,7 +56,7 @@ export async function patchCar(req: Request<CarParams, Car, CarPatch>, res: Resp
 
 export async function removeCar(req: Request<CarParams>, res: Response) {
 	try {
-		const carId = req.params.id
+		const carId = res.locals.params.id
 		await carService.remove(carId)
 
 		res.status(204).send()

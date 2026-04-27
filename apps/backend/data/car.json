@@ -38,5 +38,21 @@
     "make": "Doodoo",
     "maxSpeed": 20,
     "type": "Hybrid"
+  },
+  {
+    "_id": "6UZAQ",
+    "createdAt": 1777276177890,
+    "updatedAt": 1777276177890,
+    "make": "Simba",
+    "maxSpeed": 33,
+    "type": "Electric"
+  },
+  {
+    "make": "Toyoyo",
+    "maxSpeed": 121,
+    "type": "Electric",
+    "_id": "kzYs7",
+    "createdAt": 1777276509277,
+    "updatedAt": 1777276509277
   }
 ]

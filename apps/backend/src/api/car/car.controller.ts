@@ -2,7 +2,9 @@ import { Request, Response } from 'express'
 
 import logger from '#services/logger.service.js'
 
-import { type Car, type CarQueryOptions, type CarParams, type CarBase, type CarPatch, CarPublicSchema } from '@car/shared'
+import { CarPublicSchema } from '@car/shared'
+import type { CarQueryOptions, CarParams, CarBase, CarPatch, CarPublic } from '@car/shared'
+
 import { carService } from './car.service.js'
 
 export async function getCars(req: Request<{}, {}, {}, CarQueryOptions>, res: Response) {
@@ -16,7 +18,7 @@ export async function getCars(req: Request<{}, {}, {}, CarQueryOptions>, res: Re
 	}
 }
 
-export async function getCarById(req: Request<CarParams, Car>, res: Response) {
+export async function getCarById(req: Request<CarParams, CarPublic>, res: Response) {
 	try {
 		const carId = res.locals.params.id
 		const car = await carService.getById(carId)
@@ -29,7 +31,7 @@ export async function getCarById(req: Request<CarParams, Car>, res: Response) {
 	}
 }
 
-export async function postCar(req: Request<{}, Car, CarBase, {}>, res: Response) {
+export async function postCar(req: Request<{}, CarPublic, CarBase, {}>, res: Response) {
     const car = res.locals.body
 	try {
 		const addedCar = await carService.post(car)
@@ -41,7 +43,7 @@ export async function postCar(req: Request<{}, Car, CarBase, {}>, res: Response)
 	}
 }
 
-export async function patchCar(req: Request<CarParams, Car, CarPatch>, res: Response) {
+export async function patchCar(req: Request<CarParams, CarPublic, CarPatch>, res: Response) {
     const car = res.locals.body
 
 	try {

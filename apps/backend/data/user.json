@@ -1,0 +1,56 @@
+[
+  {
+    "_id": "wfawE",
+    "createdAt": 1713500000000,
+    "updatedAt": 1713600000000,
+    "username": "cc",
+    "fullname": "cc",
+    "password": "cc",
+    "role": "Member"
+  },
+  {
+    "_id": "GOtHH",
+    "createdAt": 1713500000000,
+    "updatedAt": 1713600000000,
+    "username": "bob",
+    "fullname": "bob",
+    "password": "bob",
+    "role": "Admin"
+  },
+  {
+    "_id": "tl3ps",
+    "createdAt": 1713500000000,
+    "updatedAt": 1713600000000,
+    "username": "aa",
+    "fullname": "aa",
+    "password": "aa",
+    "role": "Member"
+  },
+  {
+    "_id": "95vlh",
+    "createdAt": 1713500000000,
+    "updatedAt": 1713600000000,
+    "username": "kk",
+    "fullname": "kk",
+    "password": "kk",
+    "role": "Moderator"
+  },
+  {
+    "_id": "3YQou",
+    "createdAt": 1713500000000,
+    "updatedAt": 1713600000000,
+    "username": "bobo",
+    "fullname": "bobo",
+    "password": "bobo",
+    "role": "Member"
+  },
+  {
+    "username": "jj",
+    "fullname": "jj",
+    "password": "jj",
+    "role": "Member",
+    "_id": "7ESqL",
+    "createdAt": 1777281987593,
+    "updatedAt": 1777281987593
+  }
+]

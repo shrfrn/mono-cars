@@ -1,0 +1,43 @@
+@baseUrl=http://127.0.0.1:3030/api/user
+
+### Fetch car list
+get {{baseUrl}}
+
+### Filter by txt
+get {{baseUrl}}?filterBy[txt]=b
+
+### Filter by role
+
+get {{baseUrl}}?filterBy[role]=Member
+
+### Sort by username
+
+get {{baseUrl}}?sortBy[sortField]=username
+
+### Sort by username desc.
+
+get {{baseUrl}}?sortBy[sortField]=username&sortBy[sortDir]=-1
+
+### Sort by fullname
+
+get {{baseUrl}}?sortBy[sortField]=fullname
+
+### Sort by fullname descending
+
+get {{baseUrl}}?sortBy[sortField]=fullname&sortBy[sortDir]=-1
+
+### Fetch a single user
+
+get {{baseUrl}}/GOtHH
+
+### Add a user
+
+post {{baseUrl}}
+content-type: application/json
+
+{
+    "username": "jj",
+    "fullname": "jj",
+    "password": "jj",
+    "role": "Member"
+}

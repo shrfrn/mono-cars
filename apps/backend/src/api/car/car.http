@@ -38,11 +38,11 @@ get {{baseUrl}}?sortBy[sortField]=make&sortBy[sortDir]=-1
 
 get {{baseUrl}}/sdj75
 
-### Delete a bug
+### Delete a car
 
 delete {{baseUrl}}/CrZsV
 
-### Add a bug
+### Add a car
 
 post {{baseUrl}}
 content-type: application/json
@@ -53,7 +53,7 @@ content-type: application/json
     "type": "Gasoline"
 }
 
-### Update a bug
+### Update a car
 
 patch {{baseUrl}}/CrZsV
 content-type: application/json

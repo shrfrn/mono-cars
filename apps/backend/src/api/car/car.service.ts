@@ -1,6 +1,7 @@
 import fs from 'node:fs'
 
-import { CarSchema, type Car, type CarBase, type CarPatch, type CarQueryOptions } from '@cars/shared'
+import { CarSchema } from '@cars/shared'
+import type { Car, CarBase, CarPatch, CarQueryOptions } from '@cars/shared'
 
 import logger from '../../services/logger.service.js'
 import { makeId } from '../../services/util.service.js'
@@ -10,7 +11,6 @@ const PAGE_SIZE = 3
 const DATA_FILE = './data/car.json'
 
 import rawData from '#data/car.json' with { type: 'json' }
-import path from 'node:path'
 const cars: Car[] = CarSchema.array().parse(rawData)
 
 export const carService = {
@@ -113,7 +113,6 @@ async function patch(carPatch: CarPatch): Promise<Car> {
 }
 
 function _save(): Promise<void> {
-    console.log("ACTUAL PATH:", path.resolve(DATA_FILE))
     return new Promise((resolve, reject) => {
         const data = JSON.stringify(cars, null, 2)
 

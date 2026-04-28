@@ -45,12 +45,21 @@
     "role": "Member"
   },
   {
+    "_id": "7ESqL",
+    "createdAt": 1777281987593,
+    "updatedAt": 1777281987593,
     "username": "jj",
     "fullname": "jj",
     "password": "jj",
-    "role": "Member",
-    "_id": "7ESqL",
-    "createdAt": 1777281987593,
-    "updatedAt": 1777281987593
+    "role": "Member"
+  },
+  {
+    "username": "uu",
+    "password": "uu",
+    "fullname": "uu",
+    "role": "Guest",
+    "_id": "WNJ4l",
+    "createdAt": 1777361140986,
+    "updatedAt": 1777361140986
   }
 ]

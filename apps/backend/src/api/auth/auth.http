@@ -1,0 +1,24 @@
+@baseUrl=http://127.0.0.1:3030/api/auth
+
+### login
+
+post {{baseUrl}}/login
+content-type: application/json
+
+{
+    "username": "jj",
+    "password": "jj"
+}
+### signup
+
+post {{baseUrl}}/signup
+content-type: application/json
+
+{
+    "username": "uu",
+    "fullname": "uu",
+    "password": "uu"
+}
+### logout
+
+post {{baseUrl}}/logout

@@ -6,7 +6,7 @@ import cookieParser from 'cookie-parser'
 
 import logger from '#services/logger.service.js'
 
-// import { authRoutes } from './api/auth/auth.routes.js'
+import { authRoutes } from './api/auth/auth.routes.js'
 // import { userRoutes } from './api/user/user.routes.js'
 // import { reviewRoutes } from './api/review/review.routes.js'
 import { carRoutes } from './api/car/car.routes.js'
@@ -38,7 +38,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 // app.all('*all', setupAsyncLocalStorage)
 
-// app.use('/api/auth', authRoutes)
+app.use('/api/auth', authRoutes)
 // app.use('/api/review', reviewRoutes)
 app.use('/api/user', userRoutes)
 app.use('/api/car', carRoutes)

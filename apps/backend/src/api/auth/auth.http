@@ -6,8 +6,17 @@ post {{baseUrl}}/login
 content-type: application/json
 
 {
-    "username": "jj",
-    "password": "jj"
+    "username": "cc",
+    "password": "cc"
+}
+### login admin
+
+post {{baseUrl}}/login
+content-type: application/json
+
+{
+    "username": "bob",
+    "password": "bob"
 }
 ### signup
 

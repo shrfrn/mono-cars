@@ -1,4 +1,4 @@
-import { LoginCredentials, MiniUser, LoginTokenSchema, SignupCredentials, UserPublicSchema, UserRoles, User } from "@car/shared"
+import { LoginCredentials, MiniUser, MiniUserSchema, SignupCredentials, UserPublicSchema, UserRoles, User } from "@car/shared"
 import { userService } from "../user/user.service.js"
 import { Request, Response } from "express"
 import { authService } from "./auth.service.js"
@@ -37,13 +37,14 @@ export async function signup(req: Request<{}, MiniUser, SignupCredentials>, res:
 }
 
 export async function logout(req: Request, res: Response) {
+    console.log('Hi')
     res.clearCookie('loginToken')
     res.status(204).send()
 }
 
 function _prepareResponse(user: User) {
     const publicUser = UserPublicSchema.parse(user)
-    const miniUser = LoginTokenSchema.parse(publicUser)
+    const miniUser = MiniUserSchema.parse(publicUser)
     const loginToken = authService.getLoginToken(miniUser)
 
     return { publicUser, loginToken }

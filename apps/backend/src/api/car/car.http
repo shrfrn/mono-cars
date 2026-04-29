@@ -40,7 +40,7 @@ get {{baseUrl}}/sdj75
 
 ### Delete a car
 
-delete {{baseUrl}}/CrZsV
+delete {{baseUrl}}/uvXKe
 
 ### Add a car
 
@@ -48,19 +48,19 @@ post {{baseUrl}}
 content-type: application/json
 
 {
-    "make": "Doodoo",
+    "make": "Doodoo1",
     "maxSpeed": 40,
     "type": "Gasoline"
 }
 
 ### Update a car
 
-patch {{baseUrl}}/CrZsV
+patch {{baseUrl}}/uvXKe
 content-type: application/json
 
 {
-    "_id": "CrZsV",
-    "make": "Doodoo",
+    "_id": "uvXKe",
+    "make": "Doodoo1",
     "maxSpeed": 20,
     "type": "Hybrid"
 }

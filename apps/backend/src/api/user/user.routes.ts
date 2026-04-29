@@ -6,6 +6,7 @@ import { validateRequest } from '#middleware/validate-request.js'
 // import { log } from '../../middlewares/logger.middleware.js'
 
 import { getUsers, getUserById, postUser } from './user.controller.js'
+import { requireAuth } from '#middleware/require-auth.js'
 
 const router = express.Router()
 
@@ -14,6 +15,6 @@ const router = express.Router()
 
 router.get('/', validateRequest(UserQueryOptionsSchema, 'query'), getUsers)
 router.get('/:id', validateRequest(UserParamsSchema, 'params'), getUserById)
-router.post('/', validateRequest(UserBaseSchema, 'body'), postUser)
+router.post('/', requireAuth, validateRequest(UserBaseSchema, 'body'), postUser)
 
 export const userRoutes = router

@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import { CarSchema } from '@cars/shared'
 import type { Car, CarBase, CarPatch, CarQueryOptions } from '@cars/shared'
 
-import logger from '../../services/logger.service.js'
+import { logger } from '../../services/logger.service.js'
 import { makeId } from '../../services/util.service.js'
 
 
@@ -11,6 +11,10 @@ const PAGE_SIZE = 3
 const DATA_FILE = './data/car.json'
 
 import rawData from '#data/car.json' with { type: 'json' }
+import { getAsyncStore } from '#middleware/async-store.js'
+import { ForbidenError, EntityNotFoundError, UnauthorizedError, AppError } from '../../errors/app-errors.js'
+import { HttpCodes } from '@cars/shared/src/http.js'
+
 const cars: Car[] = CarSchema.array().parse(rawData)
 
 export const carService = {
@@ -25,91 +29,83 @@ async function query(options: CarQueryOptions): Promise<Car[]> {
     const { filterBy, sortBy } = options
     let res = [...cars]
 
-	try {
-        if (filterBy?.txt) {
-            console.log(filterBy)
-            const regex = new RegExp(filterBy.txt, 'i')
-            res = res.filter(car => regex.test(car.make))
-        }
+    if (filterBy?.txt) {
+        console.log(filterBy)
+        const regex = new RegExp(filterBy.txt, 'i')
+        res = res.filter(car => regex.test(car.make))
+    }
 
-        if (filterBy?.minSpeed) {
-            res = res.filter(car => car.maxSpeed >= filterBy.minSpeed!)
-        }
-        
-        if (filterBy?.type) {
-            res = res.filter(car => car.type === filterBy.type!)
-        }
+    if (filterBy?.minSpeed) {
+        res = res.filter(car => car.maxSpeed >= filterBy.minSpeed!)
+    }
+    
+    if (filterBy?.type) {
+        res = res.filter(car => car.type === filterBy.type!)
+    }
 
-        if (sortBy?.sortField === 'make') {
-            res.sort((car1, car2) => car1.make.localeCompare(car2.make) * sortBy.sortDir)
-        } else if (sortBy?.sortField === 'maxSpeed') {
-            res.sort((car1, car2) => (car1.maxSpeed - car2.maxSpeed) * sortBy.sortDir)
-        }
+    if (sortBy?.sortField === 'make') {
+        res.sort((car1, car2) => car1.make.localeCompare(car2.make) * sortBy.sortDir)
+    } else if (sortBy?.sortField === 'maxSpeed') {
+        res.sort((car1, car2) => (car1.maxSpeed - car2.maxSpeed) * sortBy.sortDir)
+    }
 
-        return res
-	} catch (err) {
-		logger.error('cannot find cars', err)
-		throw err
-	}
+    return res
 }
 
 async function getById(carId: string): Promise<Car> {
-	try {
-        const car = cars.find(car => car._id === carId)
-        if (!car) throw new Error(`Car with _id ${carId} not found`)
-        return car
-	} catch (err) {
-		logger.error(`while finding car ${carId}`, err)
-		throw err
-	}
+    const car = cars.find(car => car._id === carId)
+    if (!car) throw new EntityNotFoundError(`Car with _id ${carId}`)
+        
+    return car
 }
 
 async function remove(carId: string): Promise<void> {
-	try {
-        const idx = cars.findIndex(car => car._id === carId)
-        cars.splice(idx, 1)
-        _save()
-	} catch (err) {
-		logger.error(`cannot remove car ${carId}`, err)
-		throw err
-	}
+    const idx = cars.findIndex(car => car._id === carId)
+    _checkOwner(cars[idx])
+
+    cars.splice(idx, 1)
+    _save()
 }
 
 async function post(carBase: CarBase): Promise<Car> {
-	try {
-        const car: Car = {
-            ...carBase,
-            _id: makeId(),
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-        }
-        cars.push(car)
-        await _save()
-        return car
-	} catch (err) {
-		logger.error('cannot insert car', err)
-		throw err
-	}
+    const { authUser: owner } = getAsyncStore()!
+
+    if (!owner) throw new UnauthorizedError()
+        
+    const car: Car = {
+        ...carBase,
+        _id: makeId(),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        owner,
+    }
+
+    cars.push(car)
+    await _save()
+    return car
 }
 
 async function patch(carPatch: CarPatch): Promise<Car> {
-	try {
-        const idx = cars.findIndex(car => car._id === carPatch._id)
-        if (!idx) throw new Error(`Car with _id ${carPatch._id} not found`)
+    const idx = cars.findIndex(car => car._id === carPatch._id)
+    if (idx === -1) throw new EntityNotFoundError(`Car with _id ${carPatch._id}`)
+    _checkOwner(cars[idx])
+    
+    const car = {
+        ...cars[idx],
+        ...carPatch,
+        updatedAt: Date.now()
+    }
 
-        const car = {
-            ...cars[idx],
-            ...carPatch,
-            updatedAt: Date.now()
-        }
+    cars.splice(idx, 1, car)
+    await _save()
+    return car
+}
 
-        cars.splice(idx, 1, car)
-        await _save()
-        return car
-	} catch (err) {
-		logger.error(`cannot update car ${carPatch._id}`, err)
-		throw err
-	}
+function _checkOwner(car: Car) {
+    const { authUser: owner } = getAsyncStore()!
+
+    if (!owner) throw new UnauthorizedError()
+    if (owner._id !== car.owner._id) throw new ForbidenError()
 }
 
 function _save(): Promise<void> {
@@ -119,7 +115,7 @@ function _save(): Promise<void> {
         fs.writeFile(DATA_FILE, data, err => {
             if (err) {
                 logger.error('Cannot write to cars file', err)
-                return reject(err)
+                throw new AppError('Cannot write to cars file', HttpCodes.InternalServerError)
             }
             resolve()
         })

@@ -2,7 +2,7 @@ import fs from 'fs'
 
 export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR"
 
-const logger = {
+export const logger = {
     debug(...args: any[]) {
         doLog('DEBUG', ...args)
     },
@@ -45,5 +45,3 @@ function doLog(level: LogLevel, ...args: any[]) {
         if (err) console.log('FATAL: cannot write to log file')
     })
 }
-
-export default logger

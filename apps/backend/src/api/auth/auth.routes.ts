@@ -1,9 +1,7 @@
 import express from 'express'
-import { LoginCredentialsSchema, SignupCredentialsSchema } from '@car/shared'
 
-// import { requireAuth } from '../../middlewares/requireAuth.middleware.js'
+import { LoginCredentialsSchema, SignupCredentialsSchema } from '@car/shared'
 import { validateRequest } from '#middleware/validate-request.js'
-// import { log } from '../../middlewares/logger.middleware.js'
 
 import { signup, login, logout } from './auth.controller.js'
 

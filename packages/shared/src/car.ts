@@ -1,5 +1,6 @@
 import z from 'zod'
 import { createEntitySchemas } from './entity.js'
+import { MiniUserSchema } from './user.js'
 
 // Car Schemas
 
@@ -8,12 +9,17 @@ export const CarFieldsSchema = z.object({
     make: z.string().min(1),
     maxSpeed: z.coerce.number().positive(),
     type: z.preprocess(val => val, CarTypeSchema),
+    owner: MiniUserSchema,
 })
 
 export const { 
     fullSchema: CarSchema, 
     baseSchema: CarBaseSchema, 
     patchSchema: CarPatchSchema } = createEntitySchemas(CarFieldsSchema)
+
+export const CarBaseInputSchema = CarBaseSchema.omit({ 
+    owner: true 
+})
 
 export const CarPublicSchema = CarSchema    // Nothing to hide in CarSchema
 
@@ -45,7 +51,7 @@ export type CarType = z.infer<typeof CarTypeSchema>
 export type CarPublic = z.infer<typeof CarPublicSchema>
 
 export type CarBase = z.infer<typeof CarBaseSchema>
-export type CarBaseInput = z.input<typeof CarBaseSchema>
+export type CarBaseInput = z.input<typeof CarBaseInputSchema>
 
 export type CarPatch = z.infer<typeof CarPatchSchema>
 export type CarPatchInput = z.input<typeof CarPatchSchema>

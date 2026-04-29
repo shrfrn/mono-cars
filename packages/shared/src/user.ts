@@ -21,7 +21,8 @@ export const UserPublicSchema = UserSchema.omit({
     password: true,
 })
 
-export const LoginTokenSchema = UserSchema.pick({
+export const MiniUserSchema = UserSchema.pick({
+    _id: true,
     fullname: true,
     imgUrl: true,
     role: true,
@@ -65,7 +66,7 @@ export type UserRoles = z.infer<typeof UserRolesSchema>
 export type User = z.infer<typeof UserSchema>
 export type UserType = z.infer<typeof UserRolesSchema>
 export type UserPublic = z.infer<typeof UserPublicSchema>
-export type MiniUser = z.infer<typeof LoginTokenSchema>
+export type MiniUser = z.infer<typeof MiniUserSchema>
 
 export type SignupCredentials = z.infer<typeof SignupCredentialsSchema>
 export type LoginCredentials = z.infer<typeof LoginCredentialsSchema>

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 
-import logger from '#services/logger.service.js'
+import { logger } from '#services/logger.service.js'
 
 import { CarPublicSchema } from '@car/shared'
 import type { CarQueryOptions, CarParams, CarBase, CarPatch, CarPublic } from '@car/shared'

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 
-import logger from '#services/logger.service.js'
+import { logger } from '#services/logger.service.js'
 
 import { UserPublicSchema } from '@car/shared'
 import type { UserQueryOptions, UserParams, UserBase, UserPublic } from '@car/shared'

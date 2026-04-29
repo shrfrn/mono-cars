@@ -5,7 +5,12 @@
     "updatedAt": 1713600000000,
     "make": "Toyoyo",
     "maxSpeed": 120,
-    "type": "Electric"
+    "type": "Electric",
+    "owner": {
+      "_id": "tl3ps",
+      "fullname": "aa",
+      "role": "Member"
+    }
   },
   {
     "_id": "sdj75",
@@ -13,7 +18,12 @@
     "updatedAt": 1718500000000,
     "make": "Volbo",
     "maxSpeed": 210,
-    "type": "Hybrid"
+    "type": "Hybrid",
+    "owner": {
+      "_id": "tl3ps",
+      "fullname": "aa",
+      "role": "Member"
+    }
   },
   {
     "_id": "3d8kd",
@@ -21,7 +31,12 @@
     "updatedAt": 1713990000000,
     "make": "Subali",
     "maxSpeed": 60,
-    "type": "Gasoline"
+    "type": "Gasoline",
+    "owner": {
+      "_id": "tl3ps",
+      "fullname": "aa",
+      "role": "Member"
+    }
   },
   {
     "_id": "5SFTu",
@@ -29,7 +44,12 @@
     "updatedAt": 1777126249026,
     "make": "Bobo",
     "maxSpeed": 4,
-    "type": "Diesel"
+    "type": "Diesel",
+    "owner": {
+      "_id": "GOtHH",
+      "fullname": "bob",
+      "role": "Admin"
+    }
   },
   {
     "_id": "kdJTD",
@@ -37,7 +57,12 @@
     "updatedAt": 1777126726034,
     "make": "Doodoo",
     "maxSpeed": 20,
-    "type": "Hybrid"
+    "type": "Hybrid",
+    "owner": {
+      "_id": "GOtHH",
+      "fullname": "bob",
+      "role": "Admin"
+    }
   },
   {
     "_id": "6UZAQ",
@@ -45,14 +70,37 @@
     "updatedAt": 1777276177890,
     "make": "Simba",
     "maxSpeed": 33,
-    "type": "Electric"
+    "type": "Electric",
+    "owner": {
+      "_id": "GOtHH",
+      "fullname": "bob",
+      "role": "Admin"
+    }
   },
   {
+    "_id": "kzYs7",
+    "createdAt": 1777276509277,
+    "updatedAt": 1777276509277,
     "make": "Toyoyo",
     "maxSpeed": 121,
     "type": "Electric",
-    "_id": "kzYs7",
-    "createdAt": 1777276509277,
-    "updatedAt": 1777276509277
+    "owner": {
+      "_id": "GOtHH",
+      "fullname": "bob",
+      "role": "Admin"
+    }
+  },
+  {
+    "make": "Doodoo1",
+    "maxSpeed": 40,
+    "type": "Gasoline",
+    "_id": "uvXKe",
+    "createdAt": 1777397921454,
+    "updatedAt": 1777397921454,
+    "owner": {
+      "_id": "7ESqL",
+      "fullname": "jj",
+      "role": "Member"
+    }
   }
 ]

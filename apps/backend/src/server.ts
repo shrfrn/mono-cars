@@ -4,21 +4,17 @@ import cors from 'cors'
 import express from 'express'
 import cookieParser from 'cookie-parser'
 
-import logger from '#services/logger.service.js'
+import { logger } from '#services/logger.service.js'
 
 import { authRoutes } from './api/auth/auth.routes.js'
-// import { userRoutes } from './api/user/user.routes.js'
-// import { reviewRoutes } from './api/review/review.routes.js'
 import { carRoutes } from './api/car/car.routes.js'
 import { userRoutes } from './api/user/user.routes.js'
-
-// import { setupSocketAPI } from './services/socket.service.js'
-// import { setupAsyncLocalStorage } from './middlewares/setupAls.middleware.js'
+import { setupAsyncStore } from '#middleware/async-store.js'
+import { errorHandler } from '#middleware/error-handler.js'
 
 const app = express()
 const server = http.createServer(app)
 
-// Express App Config
 app.set('query parser', 'extended')
 app.use(cookieParser())
 app.use(express.json())
@@ -36,10 +32,10 @@ if (process.env.NODE_ENV === 'production') {
     }
     app.use(cors(corsOptions))
 }
-// app.all('*all', setupAsyncLocalStorage)
+
+app.use(setupAsyncStore)
 
 app.use('/api/auth', authRoutes)
-// app.use('/api/review', reviewRoutes)
 app.use('/api/user', userRoutes)
 app.use('/api/car', carRoutes)
 
@@ -54,8 +50,9 @@ app.get('{*splat}', (req, res) => {
     res.sendFile(path.resolve('public/index.html'))
 })
 
-const port = process.env.PORT || 3030
+app.use(errorHandler)
 
+const port = process.env.PORT || 3030
 server.listen(port, () => {
     logger.info('Server is running on port: ' + port)
 })

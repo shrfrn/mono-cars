@@ -5,7 +5,7 @@
     "moduleResolution": "NodeNext",
     "outDir": "./dist",
     "rootDir": "../../",
-    "types": ["node"] 
+    "types": ["node", "express"] 
   },
   "include": [
     "src/**/*", 

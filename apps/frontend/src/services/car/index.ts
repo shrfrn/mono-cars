@@ -5,7 +5,7 @@ export const carService =
     import.meta.env.VITE_ENTITY_SERVICES === 'LOCAL' ? local : remote
 
     
-// Provide carService access in the browser conole when in development
+// Provide carService access in the browser console when in development
 
 declare global {
     interface Window {

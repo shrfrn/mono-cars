@@ -1,7 +1,5 @@
-import z from 'zod'
-
-import type { Car, CarBaseInput, CarType, CarPatchInput, CarQueryOptions } from '@cars/shared'
-import { CarSchema, CarBaseSchema, CarPatchSchema, CarQueryOptionsSchema } from '@cars/shared'
+import type { Car, CarBaseInput, CarType, CarPatchInput, CarQueryOptions, CarPublic, CarPatch, CarBase } from '@cars/shared'
+import { CarSchema, CarBaseSchema, CarPatchSchema, CarQueryOptionsSchema, CarPublicSchema } from '@cars/shared'
 
 import { storageService } from '../storage.service'
 import { makeid, loadFromStorage, saveToStorage, getRandomElement } from '../util.service'
@@ -20,12 +18,12 @@ export const carService = {
 
 _createCars()
 
-async function query(options: CarQueryOptions = {}): Promise<Car[]>{
+async function query(options: CarQueryOptions = {}): Promise<CarPublic[]>{
     const queryOptions = CarQueryOptionsSchema.parse(options)
     const { filterBy, sortBy } = queryOptions
 
     const data = await storageService.query(STORAGE_KEY)
-    let cars = z.array(CarSchema).parse(data)
+    let cars = CarSchema.array().parse(data)
 
     if (filterBy?.txt) {
         const regex = new RegExp(filterBy.txt, 'i')
@@ -46,20 +44,20 @@ async function query(options: CarQueryOptions = {}): Promise<Car[]>{
         cars.sort((car1, car2) => (car1.maxSpeed - car2.maxSpeed) * sortBy.sortDir)
     }
 
-    return cars
+    return CarPublicSchema.array().parse(cars)
 }
 
-async function getById(carId: string): Promise<Car | undefined> {
+async function getById(carId: string): Promise<CarPublic | undefined> {
     const data = await storageService.get(STORAGE_KEY, carId)
-    return CarSchema.parse(data)
+    return CarPublicSchema.parse(data)
 }
 
 async function remove(carId: string): Promise<void> {
     return storageService.remove(STORAGE_KEY, carId)
 }
 
-async function save(car: CarPatchInput | CarBaseInput): Promise<Car> {
-    let validated, data
+async function save(car: CarPatchInput | CarBaseInput): Promise<CarPublic> {
+    let validated: CarPatch | CarBase, data: CarPublic
 
     if ('_id' in car) {
         validated = CarPatchSchema.parse(car)
@@ -68,7 +66,7 @@ async function save(car: CarPatchInput | CarBaseInput): Promise<Car> {
         validated = CarBaseSchema.parse(car)
         data = await storageService.post(STORAGE_KEY, validated)
     }
-    return CarSchema.parse(data)
+    return CarPublicSchema.parse(data)
 }
 
 function getEmptyCar(): CarBaseInput {
@@ -96,8 +94,8 @@ function getEmptyCarOptions(): CarQueryOptions {
 // Private Functions 
 
 function _createCars() {
-    let cars = loadFromStorage(STORAGE_KEY) as Car[]
-    if (cars && cars.length > 0) return
+    let cars = loadFromStorage<Car[]>(STORAGE_KEY) ?? []
+    if (cars.length > 0) return
 
     cars = [
         _createCar('Toyoyo', 140),
@@ -113,6 +111,12 @@ function _createCar(make: string, maxSpeed: number): Car {
     const type = getRandomElement(carTypes) as CarType
 
     return {
+        owner: {
+            role: 'Member',
+            _id: makeid(),
+            fullname: 'Member',
+            imgUrl: undefined,
+        },
         _id: makeid(),
         createdAt: Date.now(),
         updatedAt: Date.now(),

@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"name": "cars",
+			"path": "."
+		},
+		{
+			"name": "shared",
+			"path": "packages/shared"
+		},
+		{
+			"name": "backend",
+			"path": "apps/backend"
+		},
+		{
+			"name": "frontend",
+			"path": "apps/frontend"
+		}
+	],
+    "settings": {}
+}

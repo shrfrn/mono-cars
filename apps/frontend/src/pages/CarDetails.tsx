@@ -11,13 +11,14 @@ export function CarDetails() {
 	const { carId } = useParams()
 
 	useEffect(() => {
-		loadCars()
-	}, [])
+		loadCar()
 
-	async function loadCars() {
-		const car = await carService.getById(carId!)
-		setCar(car)
-	}
+		async function loadCar() {
+			const car = await carService.getById(carId!)
+			setCar(car)
+		}
+	}, [carId])
+
 
 	if (!car) return <h2>loding...</h2>
 	return (

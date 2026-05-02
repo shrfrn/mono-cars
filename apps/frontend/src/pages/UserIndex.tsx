@@ -8,13 +8,13 @@ export function UserIndex() {
 
     useEffect(() => {
         loadUsers()
+
+		async function loadUsers() {
+			const users = await userService.getUsers()
+			setUsers(users)
+		}
     }, [])
-
-    async function loadUsers() {
-        const users = await userService.getUsers()
-        setUsers(users)
-    }
-
+	
     async function onRemoveUser(userId: string) {
         await userService.removeUser(userId)
         setUsers(prev => prev?.filter(user => user.id !== userId))

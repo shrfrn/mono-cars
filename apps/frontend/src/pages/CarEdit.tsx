@@ -3,30 +3,34 @@ import { Link, useNavigate, useParams } from 'react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-import { CarBaseSchema, CarTypeSchema, type CarBaseInput } from '@cars/shared'
+import { CarBaseInputSchema, CarTypeSchema, type CarBaseInput } from '@cars/shared'
 import { carService } from '../services/car'
 
 export function CarEdit() {
-    const { carId } = useParams()
+    const { carId } = useParams<{ carId: string }>()
     const navigate = useNavigate()
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<CarBaseInput>({
-        resolver: zodResolver(CarBaseSchema),
+        resolver: zodResolver(CarBaseInputSchema),
         defaultValues: carService.getEmptyCar(),
     })
-
-	useEffect(() => {
-		if (carId) loadCar()
-	}, [])
 
 	async function loadCar() {
 		const car = await carService.getById(carId!)
 		reset(car)
 	}
 
+	useEffect(() => {
+		if (carId) loadCar() 
+	}, [])
+
     async function onSaveCar(car: CarBaseInput) {
-        await carService.save(car)
-        navigate('/car')
+        try {
+			await carService.save(car)
+			navigate('/car')
+		} catch (err) {
+			alert(err.response.data.message)
+		}
     }
 
 	return (

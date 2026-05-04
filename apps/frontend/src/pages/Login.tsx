@@ -4,10 +4,10 @@ import { Link, useNavigate } from 'react-router'
 import { useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-import { LoginCredentialsSchema, type SignupCredentials, SignupCredentialsSchema } from '@cars/shared'
+import { LoginCredentialsSchema, type MiniUser, type SignupCredentials, SignupCredentialsSchema } from '@cars/shared'
 import { authService } from '../services/auth'
 
-export function Login() {
+export function Login({ setLoggedInUser }: { setLoggedInUser: (user: MiniUser | null) => void }) {
 	const [isSignup, setIsSignup] = useState(false)
     const navigate = useNavigate()
 	
@@ -21,10 +21,11 @@ export function Login() {
     async function onSubmit(credentials: SignupCredentials) {
 		const action = isSignup ? authService.signup : authService.login
         try {
-			console.log('credentials', credentials)
-			await action(credentials)
+			const loggedinUser = await action(credentials)
+			setLoggedInUser(loggedinUser)
 			navigate('/car')
 		} catch (err) {
+			console.log('err', err.response.data)
 			alert(err.response.data.message)
 		}
     }
@@ -57,7 +58,7 @@ export function Login() {
 			</a>
 
 			<Link to="/car">Cancel</Link>
-            <button>Save</button>
+            <button>{isSignup ? 'Signup' : 'Login'}</button>
 		</form>
 	)
 }

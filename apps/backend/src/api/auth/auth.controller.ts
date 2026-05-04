@@ -2,42 +2,35 @@ import { LoginCredentials, MiniUser, MiniUserSchema, SignupCredentials, UserPubl
 import { userService } from "../user/user.service.js"
 import { Request, Response } from "express"
 import { authService } from "./auth.service.js"
+import { UnauthorizedError, ValidationError } from "../../errors/app-errors.js"
 
 export async function login(req: Request<{}, MiniUser, LoginCredentials>, res: Response) {
     const { username, password } = req.body
-    try {
-        const user = await userService.getByUsername(username)
-        if (!user || user.password !== password) return res.status(404).send()
+	
+	const user = await userService.getByUsername(username)
+	if (!user || user.password !== password) throw new UnauthorizedError('Invalid username or password')
 
-        const { publicUser, loginToken } = _prepareResponse(user)
+	const { publicUser, loginToken } = _prepareResponse(user)
 
-        res.cookie('loginToken', loginToken)
-        res.send(publicUser)
-    } catch (err) {
-        
-    }
+	res.cookie('loginToken', loginToken)
+	res.send(publicUser)
 }
 
 export async function signup(req: Request<{}, MiniUser, SignupCredentials>, res: Response) {
     const { username, password, fullname } = req.body
-    const registration = { username, password, fullname, role: 'Guest' as UserRoles }
+    const registration = { username, password, fullname, role: 'Member' as UserRoles }
 
-    try {
-        const user = await userService.getByUsername(username)
-        if (user) return res.status(400).send({ err: 'username taken' })
+	const user = await userService.getByUsername(username)
+	if (user) throw new ValidationError('username taken')
 
-        const newUser = await userService.post(registration)
-        const { publicUser, loginToken } = _prepareResponse(newUser)
-        
-        res.cookie('loginToken', loginToken)
-        res.send(publicUser)
-    } catch (err) {
-        
-    }
+	const newUser = await userService.post(registration)
+	const { publicUser, loginToken } = _prepareResponse(newUser)
+	
+	res.cookie('loginToken', loginToken)
+	res.send(publicUser)
 }
 
 export async function logout(req: Request, res: Response) {
-    console.log('Hi')
     res.clearCookie('loginToken')
     res.status(204).send()
 }

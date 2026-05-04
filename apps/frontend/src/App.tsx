@@ -9,10 +9,16 @@ import { CarIndex } from './pages/CarIndex'
 import { CarDetails } from './pages/CarDetails'
 import { CarEdit } from './pages/CarEdit'
 import { Login } from './pages/Login'
+import { useState } from 'react'
+import type { MiniUser } from '@cars/shared'
+import { authService } from './services/auth'
 
 function App() {
+	const [loggedInUser, setLoggedInUser] = useState<MiniUser | null>(authService.getLoggedInUser())
+	console.log('loggedInUser', loggedInUser)
+
     return <Router>
-        <AppHeader />
+        <AppHeader loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser}/>
         <Routes>
             <Route path='/' element={<Home />}/>
             <Route path='/about' element={<About />}/>
@@ -20,7 +26,7 @@ function App() {
             <Route path='/car' element={<CarIndex />}/>
             <Route path='/car/edit/:carId?' element={<CarEdit />}/>
             <Route path='/car/:carId' element={<CarDetails />}/>
-            <Route path='/login' element={<Login />}/>
+            <Route path='/login' element={<Login setLoggedInUser={setLoggedInUser}/>}/>
         </Routes>
 
     </Router>

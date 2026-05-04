@@ -7,7 +7,6 @@ export const authService = {
 	login,
 	signup,
 	logout,
-	getLoggedInUser,
 }
 
 async function login(credentials: LoginCredentials): Promise<MiniUser> {
@@ -30,11 +29,6 @@ async function signup(credentials: SignupCredentials): Promise<MiniUser> {
 
 async function logout(): Promise<void> {
     _setLoggedInUser(null)
-}
-
-async function getLoggedInUser(): Promise<MiniUser | null> {
-    const loggedInUser = sessionStorage.getItem('loggedInUser')
-    return loggedInUser ? MiniUserSchema.parse(JSON.parse(loggedInUser)) : null
 }
 
 // Private functions

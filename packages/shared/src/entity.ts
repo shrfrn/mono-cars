@@ -1,7 +1,14 @@
 import z from 'zod'
 
+
+// If the value is an ObjectId, convert it to a string
+// We're using duck typing so there is no dependency on the ObjectId class
+
+export const EntityIdSchema = z.preprocess(val => 
+		(val && typeof (val as any).toHexString === 'function') ? (val as any).toHexString() : val, z.string())
+		
 export const EntitySchema = z.object({
-	_id: z.string().min(5),
+	_id: EntityIdSchema,
 	createdAt: z.number().positive(),
 	updatedAt: z.number().positive(),
 })

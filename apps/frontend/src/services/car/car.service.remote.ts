@@ -1,7 +1,7 @@
 import z from 'zod'
 
 import type { Car, CarBaseInput, CarPatchInput, CarQueryOptions } from '@cars/shared'
-import { CarSchema, CarBaseSchema, CarPatchSchema, CarQueryOptionsSchema } from '@cars/shared'
+import { CarSchema, CarPatchSchema, CarQueryOptionsSchema, CarBaseInputSchema } from '@cars/shared'
 
 import { httpService } from '../http.service'
 
@@ -19,29 +19,29 @@ export const carService = {
 
 async function query(options: CarQueryOptions = {}): Promise<Car[]>{
     const queryOptions = CarQueryOptionsSchema.parse(options)
-    const { filterBy, sortBy } = queryOptions
+    // const { filterBy, sortBy } = queryOptions
 
     const data = await httpService.get(BASE_URL, queryOptions)
-    let cars = z.array(CarSchema).parse(data)
+    const cars = z.array(CarSchema).parse(data)
 
-    if (filterBy?.txt) {
-        const regex = new RegExp(filterBy.txt, 'i')
-        cars = cars.filter(car => regex.test(car.make))
-    }
+    // if (filterBy?.txt) {
+    //     const regex = new RegExp(filterBy.txt, 'i')
+    //     cars = cars.filter(car => regex.test(car.make))
+    // }
 
-    if (filterBy?.minSpeed) {
-        cars = cars.filter(car => car.maxSpeed >= filterBy.minSpeed!)
-    }
+    // if (filterBy?.minSpeed) {
+    //     cars = cars.filter(car => car.maxSpeed >= filterBy.minSpeed!)
+    // }
 
-    if (filterBy?.type) {
-        cars = cars.filter(car => car.type >= filterBy.type!)
-    }
+    // if (filterBy?.type) {
+    //     cars = cars.filter(car => car.type >= filterBy.type!)
+    // }
 
-    if (sortBy?.sortField === 'make') {
-        cars.sort((car1, car2) => car1.make.localeCompare(car2.make) * sortBy.sortDir)
-    } else if (sortBy?.sortField === 'maxSpeed') {
-        cars.sort((car1, car2) => (car1.maxSpeed - car2.maxSpeed) * sortBy.sortDir)
-    }
+    // if (sortBy?.sortField === 'make') {
+    //     cars.sort((car1, car2) => car1.make.localeCompare(car2.make) * sortBy.sortDir)
+    // } else if (sortBy?.sortField === 'maxSpeed') {
+    //     cars.sort((car1, car2) => (car1.maxSpeed - car2.maxSpeed) * sortBy.sortDir)
+    // }
 
     return cars
 }
@@ -57,16 +57,20 @@ async function remove(carId: string): Promise<void> {
 
 async function save(car: CarPatchInput | CarBaseInput): Promise<Car> {
     let validated, data
-
+	
     try {
 		if ('_id' in car) {
-		        validated = CarPatchSchema.parse(car)
-		        data = await httpService.patch(BASE_URL, validated)
-		    } else {
-		        validated = CarBaseSchema.parse(car)
+			validated = CarPatchSchema.parse(car)
+			data = await httpService.patch(BASE_URL, validated)
+		} else {
+				console.log('onSaveCar', car)
+		        validated = CarBaseInputSchema.parse(car)
+				console.log('onSaveCar', validated)
+
 		        data = await httpService.post(BASE_URL, validated)
 		    }
 	} catch (err) {
+		console.log('error', err)
 		console.log(err.response.data.stack)
 		throw err
 	}

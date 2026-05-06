@@ -1,123 +1,95 @@
-import fs from 'node:fs'
-
-import { CarSchema } from '@cars/shared'
+import { Filter, FindOptions, Sort, SortDirection } from 'mongodb'
 import type { Car, CarBase, CarPatch, CarQueryOptions } from '@cars/shared'
-
-import { logger } from '../../services/logger.service.js'
-import { makeId } from '../../services/util.service.js'
-
-
-const PAGE_SIZE = 3
-const DATA_FILE = './data/car.json'
-
-import rawData from '#data/car.json' with { type: 'json' }
+import { CarSchema } from '@cars/shared'
 import { getAsyncStore } from '#middleware/async-store.js'
-import { ForbidenError, EntityNotFoundError, UnauthorizedError, AppError } from '../../errors/app-errors.js'
-import { HttpCodes } from '@cars/shared/src/http.js'
-
-const cars: Car[] = CarSchema.array().parse(rawData)
+import { ForbidenError, EntityNotFoundError, UnauthorizedError } from '../../errors/app-errors.js'
+import { getCollection, byObjectId, prepareInsert, prepareUpdate } from '#services/db.service.js'
 
 export const carService = {
-	remove,
 	query,
+	remove,
 	getById,
 	post,
 	patch,
 }
 
-async function query(options: CarQueryOptions): Promise<Car[]> {
-    const { filterBy, sortBy } = options
-    let res = [...cars]
+type MongoCar = Omit<Car, '_id'>
 
-    if (filterBy?.txt) {
-        console.log(filterBy)
-        const regex = new RegExp(filterBy.txt, 'i')
-        res = res.filter(car => regex.test(car.make))
-    }
+async function query(queryOptions: CarQueryOptions): Promise<Car[]> {
+    const { criteria, sort } = _parseQueryOptions(queryOptions)
+	const options: FindOptions = { sort }
 
-    if (filterBy?.minSpeed) {
-        res = res.filter(car => car.maxSpeed >= filterBy.minSpeed!)
-    }
-    
-    if (filterBy?.type) {
-        res = res.filter(car => car.type === filterBy.type!)
-    }
-
-    if (sortBy?.sortField === 'make') {
-        res.sort((car1, car2) => car1.make.localeCompare(car2.make) * sortBy.sortDir)
-    } else if (sortBy?.sortField === 'maxSpeed') {
-        res.sort((car1, car2) => (car1.maxSpeed - car2.maxSpeed) * sortBy.sortDir)
-    }
-
-    return res
+	const collection = await getCollection<MongoCar>('cars')
+    const cars = await collection.find(criteria, options).toArray()
+	
+    return CarSchema.array().parse(cars)
 }
 
-async function getById(carId: string): Promise<Car> {
-    const car = cars.find(car => car._id === carId)
-    if (!car) throw new EntityNotFoundError(`Car with _id ${carId}`)
-        
-    return car
+async function getById(carId: string): Promise<Car | null> {
+	const collection = await getCollection<MongoCar>('cars')
+	const car = await collection.findOne(byObjectId(carId))
+
+	if (!car) return null
+	return CarSchema.parse(car)
 }
 
 async function remove(carId: string): Promise<void> {
-    const idx = cars.findIndex(car => car._id === carId)
-    _checkOwner(cars[idx])
+    const { authUser: owner } = getAsyncStore()!
+    if (!owner) throw new UnauthorizedError()
 
-    cars.splice(idx, 1)
-    _save()
+	const collection = await getCollection<MongoCar>('cars')
+	const criteria = { ...byObjectId(carId), 'owner._id': owner._id }
+	const { deletedCount } = await collection.deleteOne(criteria)
+
+	if (deletedCount === 0) throw new ForbidenError() // Assuming car exists but with different owner
 }
 
 async function post(carBase: CarBase): Promise<Car> {
     const { authUser: owner } = getAsyncStore()!
-
     if (!owner) throw new UnauthorizedError()
-        
-    const car: Car = {
-        ...carBase,
-        _id: makeId(),
-        createdAt: Date.now(),
-        updatedAt: Date.now(),
-        owner,
-    }
 
-    cars.push(car)
-    await _save()
-    return car
+	const collection = await getCollection<MongoCar>('cars')
+    const car = { ...carBase, ...prepareInsert(carBase), owner }
+
+	await collection.insertOne(car)
+	return CarSchema.parse(car)
 }
 
 async function patch(carPatch: CarPatch): Promise<Car> {
-    const idx = cars.findIndex(car => car._id === carPatch._id)
-    if (idx === -1) throw new EntityNotFoundError(`Car with _id ${carPatch._id}`)
-    _checkOwner(cars[idx])
-    
-    const car = {
-        ...cars[idx],
-        ...carPatch,
-        updatedAt: Date.now()
-    }
-
-    cars.splice(idx, 1, car)
-    await _save()
-    return car
-}
-
-function _checkOwner(car: Car) {
     const { authUser: owner } = getAsyncStore()!
-
     if (!owner) throw new UnauthorizedError()
-    if (owner._id !== car.owner._id) throw new ForbidenError()
+    
+	const collection = await getCollection<MongoCar>('cars')
+	const { _id, ...car } = { ...prepareUpdate<Car>(carPatch as Car) }
+
+	const criteria = { ...byObjectId(_id), 'owner._id': owner._id }
+	const updated = await collection.findOneAndUpdate(criteria, { $set: car }, { returnDocument: 'after' })
+
+	if (!updated) throw new ForbidenError() // Assuming car exists but with different owner
+	return CarSchema.parse(updated)
 }
 
-function _save(): Promise<void> {
-    return new Promise((resolve, reject) => {
-        const data = JSON.stringify(cars, null, 2)
+function _parseQueryOptions(queryOptions: CarQueryOptions) {
+	const { filterBy, sortBy } = queryOptions
 
-        fs.writeFile(DATA_FILE, data, err => {
-            if (err) {
-                logger.error('Cannot write to cars file', err)
-                throw new AppError('Cannot write to cars file', HttpCodes.InternalServerError)
-            }
-            resolve()
-        })
-    })
+	const criteria: Filter<MongoCar> = {}
+	const sort: Record<string, SortDirection> = {}
+
+	if (filterBy?.txt) {
+		criteria.make = { $regex: filterBy.txt, $options: 'i' }
+	}
+
+    if (filterBy?.minSpeed) {
+		criteria.maxSpeed = { $gte: filterBy.minSpeed! }
+    }
+    
+    if (filterBy?.type) {
+		criteria.type = filterBy.type!
+	}
+	
+	if (sortBy?.sortField) {
+		sort[sortBy.sortField] = sortBy.sortDir
+	}
+
+	return { criteria, sort }
 }

@@ -32,6 +32,7 @@ export async function getCarById(req: Request<CarParams, CarPublic>, res: Respon
 }
 
 export async function postCar(req: Request<{}, CarPublic, CarBase, {}>, res: Response) {
+	
     const car = res.locals.body
 	try {
 		const addedCar = await carService.post(car)

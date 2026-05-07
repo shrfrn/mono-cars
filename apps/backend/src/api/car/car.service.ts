@@ -1,8 +1,8 @@
-import { Filter, FindOptions, Sort, SortDirection } from 'mongodb'
+import { Filter, FindOptions, SortDirection } from 'mongodb'
 import type { Car, CarBase, CarPatch, CarQueryOptions } from '@cars/shared'
 import { CarSchema } from '@cars/shared'
 import { getAsyncStore } from '#middleware/async-store.js'
-import { ForbidenError, EntityNotFoundError, UnauthorizedError } from '../../errors/app-errors.js'
+import { ForbidenError, UnauthorizedError } from '../../errors/app-errors.js'
 import { getCollection, byObjectId, prepareInsert, prepareUpdate } from '#services/db.service.js'
 
 export const carService = {
@@ -49,7 +49,7 @@ async function post(carBase: CarBase): Promise<Car> {
     if (!owner) throw new UnauthorizedError()
 
 	const collection = await getCollection<MongoCar>('cars')
-    const car = { ...carBase, ...prepareInsert(carBase), owner }
+    const car = { ...prepareInsert(carBase), owner }
 
 	await collection.insertOne(car)
 	return CarSchema.parse(car)
@@ -60,7 +60,7 @@ async function patch(carPatch: CarPatch): Promise<Car> {
     if (!owner) throw new UnauthorizedError()
     
 	const collection = await getCollection<MongoCar>('cars')
-	const { _id, ...car } = { ...prepareUpdate<Car>(carPatch as Car) }
+	const { _id, ...car } = prepareUpdate(carPatch)
 
 	const criteria = { ...byObjectId(_id), 'owner._id': owner._id }
 	const updated = await collection.findOneAndUpdate(criteria, { $set: car }, { returnDocument: 'after' })

@@ -1,6 +1,5 @@
 import z from 'zod'
 
-
 // If the value is an ObjectId, convert it to a string
 // We're using duck typing so there is no dependency on the ObjectId class
 

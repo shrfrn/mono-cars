@@ -58,21 +58,12 @@ async function remove(carId: string): Promise<void> {
 async function save(car: CarPatchInput | CarBaseInput): Promise<Car> {
     let validated, data
 	
-    try {
-		if ('_id' in car) {
-			validated = CarPatchSchema.parse(car)
-			data = await httpService.patch(BASE_URL, validated)
-		} else {
-				console.log('onSaveCar', car)
-		        validated = CarBaseInputSchema.parse(car)
-				console.log('onSaveCar', validated)
-
-		        data = await httpService.post(BASE_URL, validated)
-		    }
-	} catch (err) {
-		console.log('error', err)
-		console.log(err.response.data.stack)
-		throw err
+	if ('_id' in car) {
+		validated = CarPatchSchema.parse(car)
+		data = await httpService.patch(BASE_URL, validated)
+	} else {
+		validated = CarBaseInputSchema.parse(car)
+		data = await httpService.post(BASE_URL, validated)
 	}
     return CarSchema.parse(data)
 }

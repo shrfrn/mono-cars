@@ -28,11 +28,11 @@ export function byObjectId<T extends Entity>(docOrId: T | string) {
 		{ _id: new ObjectId(docOrId._id) }
 }
 
-export function prepareInsert(doc: object) {
+export function prepareInsert<T>(doc: T) {
 	return { ...doc, createdAt: Date.now(), updatedAt: Date.now() }
 }
 
-export function prepareUpdate<T extends Entity>(doc: T) {
+export function prepareUpdate<T>(doc: T) {
 	return { ...doc, updatedAt: Date.now() } 
 }
 

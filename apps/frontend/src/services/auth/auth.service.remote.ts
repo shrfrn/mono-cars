@@ -3,6 +3,7 @@ import { MiniUserSchema } from '@cars/shared'
 
 import { httpService } from '../http.service'
 
+const STORAGE_KEY = 'loggedinUser'
 const BASE_URL = 'auth/'
 
 export const authService = {
@@ -19,7 +20,8 @@ async function login(credentials: LoginCredentials): Promise<MiniUser> {
 }
 
 async function signup(credentials: SignupCredentials): Promise<MiniUser> {
-    const user = await httpService.post(BASE_URL + 'signup', credentials)
+	const withImgUrl = { ...credentials, imgUrl: `https://robohash.org/${credentials.username}` }
+    const user = await httpService.post(BASE_URL + 'signup', withImgUrl)
 
     const miniUser = MiniUserSchema.parse(user)
     return _setLoggedInUser(miniUser)
@@ -33,8 +35,11 @@ async function logout(): Promise<void> {
 // Private functions
 
 function _setLoggedInUser(user: MiniUser | null) {
-    if (user) sessionStorage.setItem('loggedInUser', JSON.stringify(user))
-	else sessionStorage.removeItem('loggedInUser')
+	if (user) {
+		console.log(STORAGE_KEY, user)
+		sessionStorage.setItem(STORAGE_KEY, JSON.stringify(user))
+	}
+	else sessionStorage.removeItem(STORAGE_KEY)
 
     return user
 }

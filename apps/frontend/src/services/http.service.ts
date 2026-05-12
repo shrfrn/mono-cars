@@ -14,7 +14,7 @@ export const httpService = {
     delete(endpoint: string) { 
         return ajax( endpoint, 'DELETE') 
     },
-    post(endpoint: string, data: object){ 
+    post(endpoint: string, data: object | null = null){ 
         return ajax(endpoint, 'POST', data )
     },
     put(endpoint: string, data: object){ 

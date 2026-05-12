@@ -6,10 +6,13 @@ import cookieParser from 'cookie-parser'
 
 import { logger } from '#services/logger.service.js'
 
+import { setupAsyncStore } from '#middleware/async-store.js'
+
 import { authRoutes } from './api/auth/auth.routes.js'
 import { carRoutes } from './api/car/car.routes.js'
 import { userRoutes } from './api/user/user.routes.js'
-import { setupAsyncStore } from '#middleware/async-store.js'
+import { reviewRoutes } from './api/review/review.routes.js'
+
 import { errorHandler } from '#middleware/error-handler.js'
 
 const app = express()
@@ -38,6 +41,7 @@ app.use(setupAsyncStore)
 app.use('/api/auth', authRoutes)
 app.use('/api/user', userRoutes)
 app.use('/api/car', carRoutes)
+app.use('/api/review', reviewRoutes)
 
 // setupSocketAPI(server)
 

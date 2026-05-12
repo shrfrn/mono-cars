@@ -39,7 +39,7 @@ export function Login({ setLoggedInUser }: { setLoggedInUser: (user: MiniUser | 
 		<form key={String(isSignup)} onSubmit={handleSubmit(onSubmit)} className="login">
 
             <section className="username">
-			    <input { ... register('username') } placeholder="username"/>
+			    <input { ... register('username') } placeholder="username" autoFocus/>
                 {errors.username && <p className="error" >{errors.username.message}</p>}
             </section>
 

@@ -1,7 +1,7 @@
 import z from 'zod'
 
-import type { Car, CarBaseInput, CarPatchInput, CarQueryOptions } from '@cars/shared'
-import { CarSchema, CarPatchSchema, CarQueryOptionsSchema, CarBaseInputSchema } from '@cars/shared'
+import type { Car, CarBaseInput, CarPatchInput, CarQueryOptions, Comment } from '@cars/shared'
+import { CarSchema, CarPatchSchema, CarQueryOptionsSchema, CarBaseInputSchema, CommentSchema } from '@cars/shared'
 
 import { httpService } from '../http.service'
 
@@ -15,33 +15,17 @@ export const carService = {
 
     getEmptyCar,
     getEmptyCarOptions,
+    addComment,
+	removeComment,
+	like,
+	unlike,
 }
 
 async function query(options: CarQueryOptions = {}): Promise<Car[]>{
     const queryOptions = CarQueryOptionsSchema.parse(options)
-    // const { filterBy, sortBy } = queryOptions
 
     const data = await httpService.get(BASE_URL, queryOptions)
     const cars = z.array(CarSchema).parse(data)
-
-    // if (filterBy?.txt) {
-    //     const regex = new RegExp(filterBy.txt, 'i')
-    //     cars = cars.filter(car => regex.test(car.make))
-    // }
-
-    // if (filterBy?.minSpeed) {
-    //     cars = cars.filter(car => car.maxSpeed >= filterBy.minSpeed!)
-    // }
-
-    // if (filterBy?.type) {
-    //     cars = cars.filter(car => car.type >= filterBy.type!)
-    // }
-
-    // if (sortBy?.sortField === 'make') {
-    //     cars.sort((car1, car2) => car1.make.localeCompare(car2.make) * sortBy.sortDir)
-    // } else if (sortBy?.sortField === 'maxSpeed') {
-    //     cars.sort((car1, car2) => (car1.maxSpeed - car2.maxSpeed) * sortBy.sortDir)
-    // }
 
     return cars
 }
@@ -60,13 +44,31 @@ async function save(car: CarPatchInput | CarBaseInput): Promise<Car> {
 	
 	if ('_id' in car) {
 		validated = CarPatchSchema.parse(car)
-		data = await httpService.patch(BASE_URL, validated)
+		data = await httpService.patch(BASE_URL + car._id!, validated)
 	} else {
 		validated = CarBaseInputSchema.parse(car)
 		data = await httpService.post(BASE_URL, validated)
 	}
     return CarSchema.parse(data)
 }
+
+async function addComment(carId: string, txt: string): Promise<Comment> {
+    const data = await httpService.post(BASE_URL + carId + '/comment', { txt })
+    return CommentSchema.parse(data)
+}
+
+async function removeComment(carId: string, commentId: string): Promise<void> {
+    await httpService.delete(BASE_URL + carId + '/comment/' + commentId)
+}
+
+async function like(carId: string): Promise<void> {
+	return httpService.post(BASE_URL + carId + '/like')
+}
+
+async function unlike(carId: string): Promise<void> {
+	return httpService.delete(BASE_URL + carId + '/unlike')
+}
+
 
 function getEmptyCar(): CarBaseInput {
     return {

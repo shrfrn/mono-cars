@@ -1,4 +1,4 @@
-import type { Car, CarBaseInput, CarType, CarPatchInput, CarQueryOptions, CarPublic, CarPatch, CarBase } from '@cars/shared'
+import type { Car, CarBaseInput, CarType, CarPatchInput, CarQueryOptions, CarPublic, CarPatch, CarBase, Comment } from '@cars/shared'
 import { CarSchema, CarBaseSchema, CarPatchSchema, CarQueryOptionsSchema, CarPublicSchema } from '@cars/shared'
 
 import { storageService } from '../storage.service'
@@ -14,6 +14,10 @@ export const carService = {
 
     getEmptyCar,
     getEmptyCarOptions,
+	addComment,
+	removeComment,
+	like,
+	unlike,
 }
 
 _createCars()
@@ -89,6 +93,23 @@ function getEmptyCarOptions(): CarQueryOptions {
             sortDir: 1,
         }
     }
+}
+
+async function addComment(carId: string, txt: string): Promise<Comment> {
+	console.log('addComment', carId, txt)
+	return { txt } as Comment
+}
+
+async function removeComment(carId: string, commentId: string): Promise<void> {
+	console.log('removeComment', carId, commentId)
+}
+
+async function like(carId: string): Promise<void> {
+	console.log('addComment', carId)
+}
+
+async function unlike(carId: string): Promise<void> {
+	console.log('removeComment', carId)
 }
 
 // Private Functions 

@@ -4,7 +4,7 @@ import { authService as local } from "./auth.service.local"
 import { authService as remote } from "./auth.service.remote"
 
 function getLoggedInUser(): MiniUser | null {
-    const loggedInUser = sessionStorage.getItem('loggedInUser')
+    const loggedInUser = sessionStorage.getItem('loggedinUser')
     return loggedInUser ? MiniUserSchema.parse(JSON.parse(loggedInUser)) : null
 }
 

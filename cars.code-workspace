@@ -5,16 +5,16 @@
 			"path": "."
 		},
 		{
+			"name": "frontend",
+			"path": "apps/frontend"
+		},
+		{
 			"name": "shared",
 			"path": "packages/shared"
 		},
 		{
 			"name": "backend",
 			"path": "apps/backend"
-		},
-		{
-			"name": "frontend",
-			"path": "apps/frontend"
 		}
 	],
     "settings": {}

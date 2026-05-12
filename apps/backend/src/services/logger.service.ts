@@ -30,17 +30,21 @@ function getTime() {
 }
 
 function isError(e: any) {
-    return e && e.stack && e.message
+    return e instanceof Error
 }
 
 function doLog(level: LogLevel, ...args: any[]) {
 
-    const strs = args.map(arg =>
-        (typeof arg === 'string' || isError(arg)) ? arg : JSON.stringify(arg)
-    )
+	const strs = args.map(arg => {
+		if (typeof arg === 'string') return arg
+		if (arg instanceof Error) return arg.stack || `${arg.name}: ${arg.message}`
+		
+		return JSON.stringify(arg)
+	})
+	
     var line = strs.join(' | ')
     line = `${getTime()} - ${level} - ${line}\n`
-    console.log(line)
+	
     fs.appendFile('./logs/backend.log', line, (err) =>{
         if (err) console.log('FATAL: cannot write to log file')
     })

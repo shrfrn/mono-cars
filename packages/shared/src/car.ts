@@ -5,11 +5,27 @@ import { MiniUserSchema } from './user.js'
 // Car Schemas
 
 export const CarTypeSchema = z.enum(['Gasoline', 'Diesel', 'Gas', 'Hybrid', 'Electric'])
+export const CommentSchema = z.object({
+    id: z.string(),
+    createdAt: z.number(),
+    txt: z.string(),
+    author: MiniUserSchema,
+})
+export const CommentInputSchema = CommentSchema.pick({ txt: true })
+
+export const LikeSchema = z.object({
+    createdAt: z.number(),
+    by: MiniUserSchema,
+})
+
+
 export const CarFieldsSchema = z.object({
     make: z.string().min(1),
     maxSpeed: z.coerce.number().positive(),
     type: z.preprocess(val => val, CarTypeSchema),
     owner: MiniUserSchema,
+	comments: CommentSchema.array().optional(),
+	likedBy: LikeSchema.array().optional(),
 })
 
 export const { 
@@ -44,10 +60,19 @@ export const CarParamsSchema = z.object({
     id: z.string(),
 })
 
+export const CommentParamsSchema = z.object({
+    id: z.string(),
+	commentId: z.string(),
+})
+
 // Car Types
+
 
 export type Car = z.infer<typeof CarSchema>
 export type CarType = z.infer<typeof CarTypeSchema>
+export type Comment = z.infer<typeof CommentSchema>
+export type CommentInput = z.infer<typeof CommentInputSchema>
+export type Like = z.infer<typeof LikeSchema>
 export type CarPublic = z.infer<typeof CarPublicSchema>
 
 export type CarBase = z.infer<typeof CarBaseSchema>
@@ -64,3 +89,4 @@ export type CarQueryOptions = z.infer<typeof CarQueryOptionsSchema>
 export type CarQueryOptionsInput = z.input<typeof CarQueryOptionsSchema>
 
 export type CarParams = z.infer<typeof CarParamsSchema>
+export type CommentParams = z.infer<typeof CommentParamsSchema>

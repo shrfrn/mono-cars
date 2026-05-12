@@ -32,6 +32,7 @@ export const SignupCredentialsSchema = UserSchema.pick({
     username: true,
     fullname: true,
     password: true,
+	imgUrl: true,
 })
 
 export const LoginCredentialsSchema = UserSchema.pick({

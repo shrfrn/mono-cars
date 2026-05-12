@@ -18,6 +18,7 @@ export function AppHeader({ loggedInUser, setLoggedInUser }:
             <NavLink to="/">Home</NavLink>
             <NavLink to="/about">About</NavLink>
             <NavLink to="/car">Cars</NavLink>
+            <NavLink to="/review">Reviews</NavLink>
             {!loggedInUser ? <NavLink to="/login">Login</NavLink> : <div className="loggedin-user">
 				<p>Welcome {loggedInUser?.fullname}</p>
 				<button onClick={logout}>Logout</button>

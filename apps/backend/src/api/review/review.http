@@ -1,0 +1,88 @@
+@baseUrl=http://127.0.0.1:3030/api/review
+
+@byUserId=69fb7762a858d93c92d5e428
+@aboutCarId=69fb79ad1702297ef0e9139d
+### Fetch review list
+get {{baseUrl}}
+
+### Filter by user id
+get {{baseUrl}}?filterBy[byUserId]={{byUserId}}
+
+### Filter by min rating
+
+get {{baseUrl}}?filterBy[minRating]=4
+
+### Filter by about car id & min rating
+
+get {{baseUrl}}?filterBy[aboutCarId]={{aboutCarId}}&filterBy[minRating]=4
+### Filter by by user id & min rating
+
+get {{baseUrl}}?filterBy[byUserId]={{byUserId}}&filterBy[minRating]=4
+
+### Sort by rating
+
+get {{baseUrl}}?sortBy[sortField]=rating
+
+### Sort by rating descending
+
+get {{baseUrl}}?sortBy[sortField]=rating&sortBy[sortDir]=-1
+
+### Sort by created at
+
+get {{baseUrl}}?sortBy[sortField]=createdAt
+
+### Sort by created at descending
+
+get {{baseUrl}}?sortBy[sortField]=createdAt&sortBy[sortDir]=-1
+
+### Fetch a single review
+
+get {{baseUrl}}/sdj75
+
+### Delete a review
+
+delete {{baseUrl}}/uvXKe
+
+### Add a review
+
+post {{baseUrl}}
+content-type: application/json
+
+{
+    "aboutCarId": {{aboutCarId}},
+    "txt": "Amazing car",
+    "rating": 5
+}
+
+### Update a review
+
+patch {{baseUrl}}/uvXKe
+content-type: application/json
+
+{
+    "_id": "uvXKe",
+    "byUserId": {{byUserId}},
+    "aboutCarId": {{aboutCarId}},
+    "txt": "Excellent car",
+    "rating": 4
+}
+
+### Login
+
+post http://127.0.0.1:3030/api/auth/login
+content-type: application/json
+
+{
+    "username": "bob",
+    "password": "bob"
+}
+
+### Logout
+
+post http://127.0.0.1:3030/api/auth/logout
+content-type: application/json
+
+{
+    "username": "cc",
+    "password": "cc"
+}

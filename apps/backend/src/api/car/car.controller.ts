@@ -3,97 +3,71 @@ import { Request, Response } from 'express'
 import { logger } from '#services/logger.service.js'
 
 import { CarPublicSchema } from '@car/shared'
-import type { CarQueryOptions, CarParams, CarBase, CarPatch, CarPublic } from '@car/shared'
+import type { CarQueryOptions, CarParams, CarBase, CarPatch, CarPublic, Comment, CommentParams, CommentInput } from '@car/shared'
 
 import { carService } from './car.service.js'
 
 export async function getCars(req: Request<{}, {}, {}, CarQueryOptions>, res: Response) {
-	try {
-		const cars = await carService.query(res.locals.query)
-        const valdated = CarPublicSchema.array().parse(cars)
-		res.json(valdated)
-	} catch (err) {
-		logger.error('Failed to get cars', err)
-		res.status(400).send({ err: 'Failed to get cars' })
-	}
+	const cars = await carService.query(res.locals.query)
+	const validated = CarPublicSchema.array().parse(cars)
+	res.json(validated)
 }
 
 export async function getCarById(req: Request<CarParams, CarPublic>, res: Response) {
-	try {
-		const carId = res.locals.params.id
-		const car = await carService.getById(carId)
-        const valdated = CarPublicSchema.parse(car)
-        
-		res.json(valdated)
-	} catch (err) {
-		logger.error('Failed to get car', err)
-		res.status(400).send({ err: 'Failed to get car' })
-	}
+	const carId = res.locals.params.id
+	const car = await carService.getById(carId)
+	const validated = CarPublicSchema.parse(car)
+	
+	res.json(validated)
 }
 
 export async function postCar(req: Request<{}, CarPublic, CarBase, {}>, res: Response) {
 	
     const car = res.locals.body
-	try {
-		const addedCar = await carService.post(car)
-        const valdated = CarPublicSchema.parse(addedCar)
-		res.json(valdated)
-	} catch (err) {
-		logger.error('Failed to add car', err)
-		res.status(400).send({ err: 'Failed to add car' })
-	}
+	const addedCar = await carService.post(car)
+	const validated = CarPublicSchema.parse(addedCar)
+	res.status(201).json(validated)
 }
 
 export async function patchCar(req: Request<CarParams, CarPublic, CarPatch>, res: Response) {
     const car = res.locals.body
 
-	try {
-		const updatedCar = await carService.patch(car)
-        const valdated = CarPublicSchema.parse(updatedCar)
-		res.json(valdated)
-	} catch (err) {
-		logger.error('Failed to update car', err)
-		res.status(400).send({ err: 'Failed to update car' })
-	}
+	const updatedCar = await carService.patch(car)
+	const validated = CarPublicSchema.parse(updatedCar)
+	res.json(validated)
 }
 
 export async function removeCar(req: Request<CarParams>, res: Response) {
-	try {
-		const carId = res.locals.params.id
-		await carService.remove(carId)
+	const carId = res.locals.params.id
+	await carService.remove(carId)
 
-		res.status(204).send()
-	} catch (err) {
-		logger.error('Failed to remove car', err)
-		res.status(400).send({ err: 'Failed to remove car' })
-	}
+	res.status(204).send()
 }
 
-// export async function addCarMsg(req, res) {
-// 	const { loggedinUser } = req
+export async function addComment(req: Request<CarParams, Comment, CommentInput>, res: Response) {
+	const { id: carId } = req.params
+	const { txt } = req.body
+	
+	const comment = await carService.addComment(carId, txt)
+	res.status(201).json(comment)
+}
 
-// 	try {
-// 		const carId = req.params.id
-// 		const msg = {
-// 			txt: req.body.txt,
-// 			by: loggedinUser,
-// 		}
-// 		const savedMsg = await carService.addCarMsg(carId, msg)
-// 		res.json(savedMsg)
-// 	} catch (err) {
-// 		logger.error('Failed to add car msg', err)
-// 		res.status(400).send({ err: 'Failed to add car msg' })
-// 	}
-// }
+export async function removeComment(req: Request<CommentParams>, res: Response) {
+	const { id: carId, commentId } = req.params
+	await carService.removeComment(carId, commentId)
+	res.status(204).send()
+}
 
-// export async function removeCarMsg(req, res) {
-// 	try {
-// 		const { id: carId, msgId } = req.params
+export async function like(req: Request<CarParams>, res: Response): Promise<void> {
+	const { id: carId } = req.params
+	
+	await carService.like(carId)
+	res.status(201).send()
+}
 
-// 		const removedId = await carService.removeCarMsg(carId, msgId)
-// 		res.send(removedId)
-// 	} catch (err) {
-// 		logger.error('Failed to remove car msg', err)
-// 		res.status(400).send({ err: 'Failed to remove car msg' })
-// 	}
-// }
+export async function unlike(req: Request<CarParams>, res: Response) {
+	const { id: carId } = req.params
+	
+	await carService.unlike(carId)
+	res.status(204).send()
+}

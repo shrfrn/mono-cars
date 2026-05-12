@@ -17,8 +17,8 @@ export async function login(req: Request<{}, MiniUser, LoginCredentials>, res: R
 }
 
 export async function signup(req: Request<{}, MiniUser, SignupCredentials>, res: Response) {
-    const { username, password, fullname } = req.body
-    const registration = { username, password, fullname, role: 'Member' as UserRoles }
+    const { username, password, fullname, imgUrl } = req.body
+    const registration = { username, password, fullname, imgUrl, role: 'Member' as UserRoles }
 
 	const user = await userService.getByUsername(username)
 	if (user) throw new ValidationError('username taken')

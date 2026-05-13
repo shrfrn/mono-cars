@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { Link } from "react-router-dom"
 
 import type { ReviewPublic, ReviewQueryOptions } from '@cars/shared'
 import { reviewService } from "../services/review"

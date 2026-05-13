@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { Review } from '@cars/shared'
+import { checkPermission } from '@cars/shared/src/abac'
+import { authService } from '#services/auth/index.ts'
 
 export type ReviewListProps = {
     reviews: Review[],
@@ -7,6 +9,14 @@ export type ReviewListProps = {
 }
 
 export function ReviewList({ reviews, onRemoveReview }: ReviewListProps) {
+	function canRemoveReview(review) {
+		return checkPermission({
+			action: 'review:delete',
+			subject: authService.getLoggedInUser(),
+			resource: review,
+		})
+	}
+
     if (!reviews) return <h1>Review List</h1>
 
     return <section className="review-list">
@@ -17,7 +27,7 @@ export function ReviewList({ reviews, onRemoveReview }: ReviewListProps) {
                 <div className="actions">
                     {/* <Link to={`${review._id}`}>Details</Link>
                     <Link to={`edit/${review._id}`}>Edit</Link> */}
-                    <button onClick={() => onRemoveReview(review._id)}>x</button>
+                    {canRemoveReview(review) && <button onClick={() => onRemoveReview(review._id)}>x</button>}
                 </div>
             </li>)}
         </ul>

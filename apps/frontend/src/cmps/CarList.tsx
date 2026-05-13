@@ -12,7 +12,6 @@ export function CarList({ cars, onRemoveCar }: CarListProps) {
     if (!cars) return <h1>Car List</h1>
 
 	function canDelete(car: Car) {
-		console.log(authService.getLoggedInUser())
 		return checkPermission({
 			action: 'car:delete',
 			subject: authService.getLoggedInUser(),

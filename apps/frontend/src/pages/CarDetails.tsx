@@ -6,6 +6,7 @@ import type { Car, Comment } from '@cars/shared'
 import { carService } from '../services/car'
 import { formatTimestamp } from '../services/util.service'
 import { authService } from '../services/auth'
+import { checkPermission } from '@cars/shared/src/abac'
 
 export function CarDetails() {
 	const loggedInUser = authService.getLoggedInUser()
@@ -50,6 +51,14 @@ export function CarDetails() {
 		setCar(prev => ({ ...prev, likedBy: prev.likedBy.filter(like => like.by._id !== loggedInUser?._id)}))
 	}
 
+	function canDeleteComment(comment) {
+		return checkPermission({
+			action: 'car:deleteComment',
+			subject: authService.getLoggedInUser(),
+			resource: comment,
+		})
+	}
+
 	if (!car) return <h2>loding...</h2>
 	return (
 		<div className="car-details">
@@ -62,7 +71,7 @@ export function CarDetails() {
 
 			{car.comments?.map(comment => <div key={comment.id}>
 				<pre>{JSON.stringify(comment, null, 2)}</pre>
-				<button onClick={() => removeComment(comment.id)}>x</button>
+				{canDeleteComment(comment) && <button onClick={() => removeComment(comment.id)}>x</button>}
 			</div>)}
 
 			<p>Liked by {car.likedBy?.length} {car.likedBy?.length === 1 ? 'person: ' : 'people: '}

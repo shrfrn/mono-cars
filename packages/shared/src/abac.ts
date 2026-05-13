@@ -1,5 +1,4 @@
 import z from 'zod'
-import { authService } from '../../../apps/frontend/src/services/auth'
 
 const CriterionOperatorSchema = z.enum(['eq', 'neq', 'gt', 'gte', 'lt', 'lte', 'in', 'nin', 'between', 'notBetween'])
 export type CriterionOperator = z.infer<typeof CriterionOperatorSchema>
@@ -109,6 +108,8 @@ const abacRules =  defineAbacRules({
 		'isAdmin': { path: 'subject.role', operator: 'eq', value: 'Admin' },
 		'isModerator': { path: 'subject.role', operator: 'eq', value: 'Moderator' },
 		'isOwner': { path: 'resource.owner._id', operator: 'eq', valuePath: 'subject._id' },
+		'isCommentAuthor': { path: 'resource.author._id', operator: 'eq', valuePath: 'subject._id' },
+		'isReviewAuthor': { path: 'resource.byUser._id', operator: 'eq', valuePath: 'subject._id' },
 		'isMfa': { path: 'subject.mfaVerified', operator: 'eq', value: true },
 		'isOfficeHours': { path: 'env.hour', operator: 'between', value: [9, 17] },
 		'isWeekend': { path: 'env.dow', operator: 'in', value: ['sat', 'sun'] },
@@ -126,6 +127,14 @@ const abacRules =  defineAbacRules({
 		},
 		'car:delete': {
 			references: ['capabilities.canWrite'],
+		},
+		'car:deleteComment': {
+			operator: 'or',
+			references: ['criteria.isAdmin', 'criteria.isModerator', 'criteria.isCommentAuthor'],
+		},
+		'review:delete': {
+			operator: 'or',
+			references: ['criteria.isAdmin', 'criteria.isModerator', 'criteria.isReviewAuthor'],
 		},
 	}
 })
@@ -169,11 +178,6 @@ function _performCheck(attr: unknown, operator: CriterionOperator, value: unknow
 	const attrIsNumber = (typeof attr === 'number')
 	const valueIsArray = Array.isArray(value)
 
-	console.log('attr', attr)
-	console.log('operator', operator)
-	console.log('value', value)
-	console.log('--------------------------------')
-
 	if (['gt', 'gte', 'lt', 'lte'].includes(operator) && !attrIsNumber ||
 		['between', 'notBetween'].includes(operator) && (!attrIsNumber || !valueIsArray) ||
 		['in', 'nin'].includes(operator) && !valueIsArray) {
@@ -185,10 +189,10 @@ function _performCheck(attr: unknown, operator: CriterionOperator, value: unknow
 		case 'eq': return attr === value
 		case 'neq': return attr !== value
 
-		case 'gt': return attr > value
-		case 'gte': return attr >= value
-		case 'lt': return attr < value
-		case 'lte': return attr <= value
+		case 'gt': return (attr as number) > (value as number)
+		case 'gte': return (attr as number) >= (value as number)
+		case 'lt': return (attr as number) < (value as number)
+		case 'lte': return (attr as number) <= (value as number)
 
 		case 'in': 
 			if (!Array.isArray(value))  throw new Error('value incompatible with operator')
@@ -198,8 +202,8 @@ function _performCheck(attr: unknown, operator: CriterionOperator, value: unknow
 			if (!Array.isArray(value))  throw new Error('value incompatible with operator')
 			return !value.includes(attr) 
 
-		case 'between': return attr >= value[0] && attr <= value[1]
-		case 'notBetween': return attr < value[0] || attr > value[1]
+		case 'between': return attrIsNumber && valueIsArray && (attr >= value[0] && attr <= value[1])
+		case 'notBetween': return attrIsNumber && valueIsArray && (attr < value[0] || attr > value[1])
 
 		default: throw new Error('Operator not found')
 	}

@@ -1,0 +1,98 @@
+services:
+  # --- CUSTOM NODE.JS APP ---
+  main-app:
+    build: .
+    volumes:
+      - .:/app            # Bind Mount
+      - /app/node_modules # Protect the internal node_modules
+      
+    ports:
+      - "3030:3030"
+    environment:
+      - MONGO_URL=mongodb://mongo1:27117,mongo2:27118,mongo3:27119/?replicaSet=car
+      - MONGO_DB_NAME=car
+      - REDIS_CACHE_URL=redis://redis-cache:6379
+      - REDIS_QUEUE_URL=redis://redis-queue:6379
+    # App waits for the core DB nodes and the logic-heavy Redis instances
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+      - redis-cache
+      - redis-queue
+
+  # --- REDIS: CACHE ---
+  redis-cache:
+    image: redis:alpine
+    # Snapshot every 60s if 1 key changes + log every operation (AOF)
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes:
+      - redis_cache_data:/data
+
+  # --- REDIS: BULLMQ ---
+  redis-queue:
+    image: redis:alpine
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes"]
+    volumes:
+      - redis_queue_data:/data
+
+  # --- MONGODB REPLICA SET NODES ---
+  mongo1:
+    image: mongo:7
+    command: ["mongod", "--replSet", "car", "--bind_ip_all", "--port", "27117"]
+    ports: 
+      - "27117:27117" # <--- Bridge to Mac
+    volumes:
+      - mongo1_data:/data/db
+
+  mongo2:
+    image: mongo:7
+    command: ["mongod", "--replSet", "car", "--bind_ip_all", "--port", "27118"]
+    ports:
+      - "27118:27118" # <--- Bridge to Mac
+    volumes:
+      - mongo2_data:/data/db
+
+  mongo3: # The node we will configure as Hidden Secondary
+    image: mongo:7
+    command: ["mongod", "--replSet", "car", "--bind_ip_all", "--port", "27119"]
+    ports:
+      - "27119:27119" # <--- Bridge to Mac
+    volumes:
+      - mongo3_data:/data/db
+
+  # --- AUTOMated REPLICA SET INITIATOR ---
+  mongo-init:
+    image: mongo:7
+    depends_on:
+      - mongo1
+      - mongo2
+      - mongo3
+    entrypoint: [ "/bin/bash", "-c" ]
+    command: >
+      "
+      until mongosh --host mongo1:27117 --eval 'db.runCommand({ping:1})' &>/dev/null; do
+        echo 'Waiting for MongoDB nodes to be network-ready...'
+        sleep 2
+      done;
+
+      echo 'Initializing Replica Set with Hidden Secondary (mongo3)...';
+      mongosh --host mongo1:27117 --eval \"
+        rs.initiate({
+          _id: 'car',
+          members: [
+            { _id: 0, host: 'mongo1:27117', priority: 2 },
+            { _id: 1, host: 'mongo2:27118', priority: 1 },
+            { _id: 2, host: 'mongo3:27119', priority: 0, hidden: true }
+          ]
+        })
+      \"
+      "
+
+# --- PERSISTENT VOLUMES ---
+volumes:
+  mongo1_data:
+  mongo2_data:
+  mongo3_data:
+  redis_cache_data:
+  redis_queue_data:

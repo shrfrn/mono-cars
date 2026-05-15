@@ -1,13 +1,13 @@
 import z from 'zod'
-import { Db, MongoClient, Document, ObjectId, WithId } from 'mongodb'
+import { Db, MongoClient, Document, ObjectId } from 'mongodb'
 
 // import { config } from '../config/index.js'
 import type { Entity } from '@cars/shared'
 import { logger } from './logger.service.js'
 
 const config = {
-	dbURL: 'mongodb://localhost:27017/car',
-	dbName: 'car',
+	dbURL: process.env.MONGO_URL || 'mongodb://localhost:27017/car',
+	dbName: process.env.MONGO_DB_NAME || 'car',
 }
 
 var db: Db | null = null

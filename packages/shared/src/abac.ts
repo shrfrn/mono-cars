@@ -47,13 +47,6 @@ export const AbacRulesSchema = z.object({
 	permissions: z.record(z.string(), PermissionSchema),
 })
 
-export const PermissionRequestSchema = z.object({
-	action: z.string(),
-	resource: z.record(z.string(), z.unknown()).optional(),
-	subject: z.record(z.string(), z.unknown()).optional(),
-	env: z.record(z.string(), z.unknown()).optional()
-})
-
 export type Criterion = z.infer<typeof CriterionSchema>
 // export type Criterion = Omit<BaseCriterion, 'path'> & {
 // 	path: `${string}.${string}`
@@ -99,7 +92,6 @@ function defineAbacRules<
 			return parsed as typeof rules 
 		}
 
-export type PermissionRequest = z.infer<typeof PermissionRequestSchema>
 
 // Define the rules:
 
@@ -139,22 +131,34 @@ const abacRules =  defineAbacRules({
 	}
 })
 
+
+type PermissionKey = keyof typeof abacRules.permissions
+export const PermissionRequestSchema = z.object({
+	action: z.string(),
+	resource: z.record(z.string(), z.unknown()).optional(),
+	subject: z.record(z.string(), z.unknown()).optional(),
+	env: z.record(z.string(), z.unknown()).optional()
+})
+export type PermissionRequest = Omit<z.infer<typeof PermissionRequestSchema>, 'action'> & {
+	action: PermissionKey,
+}
+
 export const checkPermission = (request: PermissionRequest) => {
 	const { action } = request
 	
 	const policy = abacRules?.permissions[action]
 	if (!policy) throw new Error(`Policy for ${action} not found`)
 
-	const method = (policy.operator === 'or') ? 'some' : 'every'
+	const method = ('operator' in policy && policy.operator === 'or') ? 'some' : 'every'
 
-	return policy.references[method](reference => {
+	return (policy.references as string[])[method](reference => {
 		const [type, key] = reference.split('.')		// key = either criteria or capabilities
 
 		if (type === 'criteria') {
-			const criterion = abacRules.criteria[key]
+			const criterion = abacRules.criteria[key as keyof typeof abacRules.criteria]
 			return _evaluateCriterion(request, criterion)
 		} else {
-			const capability = abacRules.capabilities[key]
+			const capability = abacRules.capabilities[key as keyof typeof abacRules.capabilities]
 			const method = (capability.operator === 'or') ? 'some' : 'every'
 			
 			return capability.references[method](criterionKey => 
@@ -171,7 +175,7 @@ function _evaluateCriterion(request: PermissionRequest, criterion: Criterion) {
 }
 
 function _getValueByPath(request: PermissionRequest, path: string) {
-	return path.split('.').reduce((acc, segment) => acc[segment], request)
+	return path.split('.').reduce<any>((acc, segment) => acc[segment], request)
 }
 
 function _performCheck(attr: unknown, operator: CriterionOperator, value: unknown) {

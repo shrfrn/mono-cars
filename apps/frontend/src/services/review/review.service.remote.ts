@@ -1,6 +1,6 @@
 import z from 'zod'
 
-import type { ReviewBaseInput, ReviewPatchInput, ReviewPublic, ReviewQueryOptions } from '@cars/shared'
+import type { AggregatedReview, ReviewBaseInput, ReviewPatchInput, ReviewPublic, ReviewQueryOptions } from '@cars/shared'
 import { ReviewPatchSchema, ReviewQueryOptionsSchema, ReviewBaseInputSchema, ReviewPublicSchema, AggregatedReviewSchema } from '@cars/shared'
 
 import { httpService } from '../http.service'
@@ -35,7 +35,7 @@ async function remove(reviewId: string): Promise<void> {
     return httpService.delete(BASE_URL + reviewId)
 }
 
-async function save(review: ReviewPatchInput | ReviewBaseInput): Promise<ReviewPublic> {
+async function save(review: ReviewPatchInput | ReviewBaseInput): Promise<AggregatedReview> {
     let validated, data
 	
 	if ('_id' in review) {
@@ -45,7 +45,7 @@ async function save(review: ReviewPatchInput | ReviewBaseInput): Promise<ReviewP
 		validated = ReviewBaseInputSchema.parse(review)
 		data = await httpService.post(BASE_URL, validated)
 	}
-    return ReviewPublicSchema.parse(data)
+    return AggregatedReviewSchema.parse(data)
 }
 
 function getEmptyReview(): ReviewBaseInput {

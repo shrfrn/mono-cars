@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
-import type { Review } from '@cars/shared'
+import type { AggregatedReview } from '@cars/shared'
 import { checkPermission } from '@cars/shared/src/abac'
 import { authService } from '#services/auth/index.ts'
 
 export type ReviewListProps = {
-    reviews: Review[],
+    reviews: AggregatedReview[],
     onRemoveReview: (reviewId: string) => void,
 }
 

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express'
 
 import { AggregatedReviewSchema, ReviewPublicSchema } from '@car/shared'
-import type { ReviewQueryOptions, ReviewParams, ReviewBase, ReviewPatch, ReviewPublic } from '@car/shared'
+import type { ReviewQueryOptions, ReviewParams, ReviewBase, ReviewPatch, ReviewPublic, AggregatedReview } from '@car/shared'
 
 import { reviewService } from './review.service.js'
 import { prepareInsert, prepareUpdate } from '#services/db.service.js'
@@ -26,18 +26,12 @@ export async function getReviewById(req: Request<ReviewParams, ReviewPublic>, re
 	res.json(validated)
 }
 
-export async function postReview(req: Request<{}, ReviewPublic, ReviewBase, {}>, res: Response) {
+export async function postReview(req: Request<{}, AggregatedReview, ReviewBase, {}>, res: Response) {
 	const { authUser: byUser } = getAsyncStore()!
 	if (!byUser) throw new UnauthorizedError()
 
-    const review = { 
-		...prepareInsert(res.locals.body), 
-		aboutCarId: new ObjectId(res.locals.body.aboutCarId), 
-		byUserId: new ObjectId(byUser._id) }
-
-	const addedReview = await reviewService.post(review)
-	const validated = ReviewPublicSchema.parse(addedReview)
-	res.json(validated)
+	const addedReview = await reviewService.post(res.locals.body)
+	res.json(addedReview)
 }
 
 export async function patchReview(req: Request<ReviewParams, ReviewPublic, ReviewPatch>, res: Response) {

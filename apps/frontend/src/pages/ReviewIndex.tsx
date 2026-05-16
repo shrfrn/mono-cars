@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react"
 
-import type { ReviewPublic, ReviewQueryOptions } from '@cars/shared'
+import type { AggregatedReview, ReviewQueryOptions } from '@cars/shared'
 import { reviewService } from "../services/review"
 import { ReviewList } from "../cmps/ReviewList"
 import { ReviewFilter } from "../cmps/ReviewFilter.tsx"
 // import { ReviewList } from "../cmps/ReviewList.tsx"
 
 export function ReviewIndex() {
-    const [reviews, setReviews ] = useState<ReviewPublic[] | undefined>(undefined)
+    const [reviews, setReviews ] = useState<AggregatedReview[] | undefined>(undefined)
     const [ reviewQueryOptions, setReviewQueryOptions ] = useState<ReviewQueryOptions>(reviewService.getEmptyReviewOptions())
 	
 	

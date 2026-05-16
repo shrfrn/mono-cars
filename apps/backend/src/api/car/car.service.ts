@@ -29,14 +29,14 @@ async function query(queryOptions: CarQueryOptions): Promise<Car[]> {
     const { criteria, sort } = _parseQueryOptions(queryOptions)
 	const options: FindOptions = { sort }
 
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
     const cars = await collection.find(criteria, options).toArray()
 	
     return CarSchema.array().parse(cars)
 }
 
 async function getById(carId: string): Promise<Car | null> {
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
 	const car = await collection.findOne(byObjectId(carId))
 
 	if (!car) return null
@@ -53,7 +53,7 @@ async function remove(carId: string): Promise<void> {
 	// ...is owned by the authenticated user or authenticated user is an admin/moderator
 	if (authUser.role !== 'Admin' && authUser.role !== 'Moderator') criteria['owner._id'] = authUser._id
 
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
 	const { deletedCount } = await collection.deleteOne(criteria)
 
 	if (deletedCount === 0) throw new ForbidenError() // Assuming car exists but with different owner
@@ -63,7 +63,7 @@ async function post(carBase: CarBase): Promise<Car> {
     const { authUser: owner } = getAsyncStore()!
     if (!owner) throw new UnauthorizedError()
 
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
     const car = { ...prepareInsert(carBase), owner }
 
 	await collection.insertOne(car)
@@ -82,7 +82,7 @@ async function patch(carPatch: CarPatch): Promise<Car> {
 	// ...is owned by the authenticated user or authenticated user is an admin/moderator
 	if (authUser.role !== 'Admin' && authUser.role !== 'Moderator') criteria['owner._id'] = authUser._id
 	
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
 	const updated = await collection.findOneAndUpdate(criteria, { $set: car }, { returnDocument: 'after' })
 
 	if (!updated) throw new ForbidenError() // Assuming car exists but with different owner
@@ -100,7 +100,7 @@ async function addComment(carId: string, txt: string): Promise<Comment> {
 		author,
 	}
 
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
 
 	const { modifiedCount } = await collection.updateOne(byObjectId(carId), { $push: { comments: comment } })
 	if (modifiedCount === 0) throw new EntityNotFoundError('Car not found')
@@ -118,7 +118,7 @@ async function removeComment(carId: string, commentId: string): Promise<void> {
 	// ...was authored by the authenticated user or authenticated user is an admin/moderator
 	if (authUser.role !== 'Admin' && authUser.role !== 'Moderator') criteria['author._id'] = authUser._id
 
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
 	const { modifiedCount } = await collection.updateOne(byObjectId(carId), { $pull: { comments: criteria } })
 
 	if (modifiedCount === 0) throw new ForbidenError() // Assuming comment exists but with different author
@@ -133,7 +133,7 @@ async function like(carId: string): Promise<void> {
 		by: owner,
 	}
 
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
 	const { modifiedCount } = await collection.updateOne(byObjectId(carId), { $push: { likedBy: like } })
 
 	if (modifiedCount === 0) throw new EntityNotFoundError('Car not found')
@@ -143,7 +143,7 @@ async function unlike(carId: string): Promise<void> {
 	const { authUser } = getAsyncStore()!
 	if (!authUser) throw new UnauthorizedError()
 
-	const collection = await getCollection<MongoCar>('cars')
+	const collection = await getCollection<MongoCar>('car')
 	const { modifiedCount } = await collection.updateOne(byObjectId(carId), { $pull: { likedBy: { 'by._id': authUser._id }}})
 
 	if (modifiedCount === 0) throw new EntityNotFoundError('Car not found')

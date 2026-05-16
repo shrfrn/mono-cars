@@ -30,14 +30,14 @@ async function query(queryOptions: UserQueryOptions): Promise<User[]> {
 	const { criteria, sort } = _parseQueryOptions(queryOptions)
 	const options: FindOptions = { sort }
 
-	const collection = await getCollection<MongoUser>('users')
+	const collection = await getCollection<MongoUser>('user')
 	const users = await collection.find(criteria, options).toArray()
 
     return UserSchema.array().parse(users)
 }
 
 async function getById(userId: string): Promise<User> {
-	const collection = await getCollection<MongoUser>('users')
+	const collection = await getCollection<MongoUser>('user')
 	
 	const user = await collection.findOne(byObjectId(userId))
 	if (!user) throw new EntityNotFoundError(`User with _id ${userId}`)
@@ -46,7 +46,7 @@ async function getById(userId: string): Promise<User> {
 }
 
 async function getByUsername(username: string): Promise<User | undefined> {
-	const collection = await getCollection<MongoUser>('users')
+	const collection = await getCollection<MongoUser>('user')
 	
 	const user = await collection.findOne({ username })
 	if (!user) return
@@ -55,7 +55,7 @@ async function getByUsername(username: string): Promise<User | undefined> {
 }
 
 async function post(userBase: UserBase): Promise<User> {
-	const collection = await getCollection<MongoUser>('users')
+	const collection = await getCollection<MongoUser>('user')
 
 	const user = { ...prepareInsert(userBase) }
 	await collection.insertOne(user)

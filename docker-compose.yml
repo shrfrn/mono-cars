@@ -88,7 +88,12 @@ services:
         })
       \"
       "
-
+  dozzle:
+      image: amir20/dozzle:latest
+      ports:
+        - "8888:8080"
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock:ro
 # --- PERSISTENT VOLUMES ---
 volumes:
   mongo1_data:

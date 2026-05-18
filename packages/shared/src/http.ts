@@ -29,6 +29,7 @@ export interface ApiErrorResponse {
 	type: 'fail' | 'error'
 	code: ErrorCode     // e.g., 'ENTITY_NOT_FOUND'
 	message: string     // Human-readable message
-	details?: any[]     // Optional: for Zod validation errors
+	details?: any[]     // Optional: structured per-issue list (e.g., Zod validation)
+	pretty?: string     // Optional: human-readable multiline summary (dev only)
 	stack?: string      // Optional: only sent in development
 }

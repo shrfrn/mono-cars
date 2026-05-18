@@ -1,8 +1,8 @@
-import { Filter, FindOptions, SortDirection, Document, ObjectId } from 'mongodb'
-import type { AggregatedReview, Review, ReviewBase, ReviewBaseInput, ReviewPatch, ReviewQueryOptions } from '@car/shared'
+import { Filter, FindOptions, SortDirection, Document, ObjectId, Collection } from 'mongodb'
+import type { AggregatedReview, MiniUser, Review, ReviewBase, ReviewBaseInput, ReviewPatch, ReviewQueryOptions } from '@car/shared'
 import { AggregatedReviewSchema, ReviewSchema } from '@car/shared'
 import { getAsyncStore } from '#middleware/async-store.js'
-import { EntityNotFoundError, ForbidenError, InternalServerError, UnauthorizedError } from '../../errors/app-errors.js'
+import { ConflictError, EntityNotFoundError, ForbidenError, InternalServerError, UnauthorizedError } from '../../errors/app-errors.js'
 import { getCollection, byObjectId, prepareInsert, prepareUpdate } from '#services/db.service.js'
 
 export const reviewService = {
@@ -63,23 +63,26 @@ async function post(reviewBase: ReviewBaseInput): Promise<AggregatedReview> {
 	}
 	
 	const { insertedId } = await collection.insertOne(review)
-	
-	const [aggregated] = await collection.aggregate(_buildPipeline({ _id: insertedId }, {})).toArray()
+	const [aggregated] = await collection.aggregate(_buildPipeline({ _id: insertedId })).toArray()
+		
 	return AggregatedReviewSchema.parse(aggregated)
 }
 
 async function patch(reviewPatch: ReviewPatch): Promise<Review> {
     const { authUser: byUser } = getAsyncStore()!
     if (!byUser) throw new UnauthorizedError()
-    
+	
+	const enrichedPatch = { 
+		...reviewPatch, 
+		byUserId: new ObjectId(byUser._id), 
+		aboutCarId: new ObjectId(reviewPatch.aboutCarId)
+	}
+		
 	const collection = await getCollection<MongoReview>('review')
-	const { _id, ...review } = { 
-		...prepareUpdate(reviewPatch), 
-			byUserId: new ObjectId(byUser._id), 
-			aboutCarId: new ObjectId(reviewPatch.aboutCarId)}
+	const { criteria, update } = prepareUpdate(enrichedPatch)
 
-	const updated = await collection.findOneAndUpdate(byObjectId(_id), { $set: review }, { returnDocument: 'after' })
-	if (!updated) throw new InternalServerError(`Couldn't update review`) 
+	const updated = await collection.findOneAndUpdate(criteria, update, { returnDocument: 'after' })
+	if (!updated) await _explainUpdateMiss(collection, reviewPatch._id, byUser)
 
 	return ReviewSchema.parse(updated)
 }
@@ -112,12 +115,12 @@ function _parseQueryOptions(queryOptions: ReviewQueryOptions) {
 		sort['aboutCar.maxSpeed'] = sortBy.sortDir
 	}
 
-	sort.createdAt = -1
+	sort._createdAt = -1
 
 	return { criteria, sort }
 }
 
-function _buildPipeline(criteria: Filter<MongoReview>, sort: Record<string, SortDirection>): Document[] {
+function _buildPipeline(criteria: Filter<MongoReview>, sort: Record<string, SortDirection> | null = null): Document[] {
 	const $project: Record<string, 0 | 1> = { aboutCarId: 0, byUserId: 0 }
 
 	if (criteria?.aboutCarId) $project.aboutCar = 0
@@ -131,12 +134,21 @@ function _buildPipeline(criteria: Filter<MongoReview>, sort: Record<string, Sort
 		{ $unwind: '$byUser' },
 		{ $project },
 	]
-	if (Object.keys(sort).length > 0) pipeline.push({ $sort: sort })
 
+	if (sort) pipeline.push({ $sort: sort })
 	return pipeline
 }
-// async function getUserReviews(userId: string): Promise<Review[]> {
-// 	const collection = await getCollection<MongoReview>('review')
-// 	const reviews = await collection.find({ byUserId: userId }).toArray()
-// 	return ReviewSchema.array().parse(reviews)
-// }
+
+// _explainUpdateMiss - throws different error types for different failures
+async function _explainUpdateMiss(collection: Collection<MongoReview>, _id: string, authUser?: MiniUser) {
+	if (!authUser) throw new UnauthorizedError()
+
+	const exists = await collection.findOne({ _id: new ObjectId(_id) })
+	if (!exists) throw new EntityNotFoundError(`Review with this _id not Found`)
+		
+	if (exists.byUserId.toString() !== authUser._id && 
+		(authUser.role !== 'Admin' && authUser.role !== 'Moderator')) 
+			throw new ForbidenError()
+			
+	throw new ConflictError()
+}

@@ -27,7 +27,7 @@ export function getRandomElement<T>(arr: T[]): T {
     return arr[idx]
 }
 
-export function formatTimestamp(timestamp: number) {
+export function formatTimestamp(timestamp: number | string | Date) {
   const date = new Date(timestamp)
   return date.toLocaleString() // Returns "MM/DD/YYYY, HH:MM:SS AM/PM" (locale dependent)
 }

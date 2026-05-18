@@ -66,8 +66,8 @@ export function CarDetails() {
 			<p>{car.type}</p>
 			<p>{car.maxSpeed}</p>
             
-			<p>Created at {formatTimestamp(car.createdAt)}</p>
-			<p>Updated at {formatTimestamp(car.updatedAt)}</p>
+			<p>Created at {formatTimestamp(car._createdAt)}</p>
+			<p>Updated at {formatTimestamp(car._updatedAt)}</p>
 
 			{car.comments?.map(comment => <div key={comment.id}>
 				<pre>{JSON.stringify(comment, null, 2)}</pre>

@@ -9,9 +9,10 @@ import { carService } from '../services/car'
 export function CarEdit() {
     const { carId } = useParams<{ carId: string }>()
     const navigate = useNavigate()
+	const schema = carId ? CarBaseInputSchema.loose() : CarBaseInputSchema
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<CarBaseInput>({
-        resolver: zodResolver(CarBaseInputSchema),
+        resolver: zodResolver(schema),
         defaultValues: carService.getEmptyCar(),
     })
 

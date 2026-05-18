@@ -1,5 +1,5 @@
 import z from 'zod'
-import { Db, MongoClient, Document, ObjectId } from 'mongodb'
+import { Db, MongoClient, Document, ObjectId, Filter, UpdateFilter } from 'mongodb'
 
 // import { config } from '../config/index.js'
 import type { Entity } from '@cars/shared'
@@ -29,11 +29,21 @@ export function byObjectId<T extends Entity>(docOrId: T | string) {
 }
 
 export function prepareInsert<T>(doc: T) {
-	return { ...doc, createdAt: Date.now(), updatedAt: Date.now() }
+	return { ...doc, _createdAt: new Date(), _updatedAt: new Date(), _version: 1 }
 }
 
-export function prepareUpdate<T>(doc: T) {
-	return { ...doc, updatedAt: Date.now() } 
+export function prepareUpdate<T extends { _id: string, _version?: number }>(doc: T) {
+	const { _id, _version, ...$set } = doc
+
+	const criteria:Filter<Document> = { _id: new ObjectId(_id) }
+	if (_version !== undefined) criteria._version = _version
+
+	const update: UpdateFilter<Document> = {
+		$set, 
+		$inc: { _version: 1 }, 
+		$currentDate: { _updatedAt: true }
+	}
+	return { criteria, update } 
 }
 
 export const MongoWriteSchema = z.preprocess((val: any) => {

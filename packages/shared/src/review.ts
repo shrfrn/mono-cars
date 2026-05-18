@@ -32,15 +32,19 @@ export const AggregatedReviewSchema = ReviewSchema.omit({
 			.omit({ 
 				comments: true, 
 				likedBy: true, 
-				createdAt: true, 
-				updatedAt: true, 
-				owner: true })
+				_createdAt: true, 
+				_updatedAt: true, 
+				_version: true, 
+				owner: true 
+			})
 			.extend({ 
 				owner: MiniUserSchema.omit({ role: true })
 			})
 			.optional(),
-	byUser: MiniUserSchema.omit({ role: true }).optional(),
+	byUser: 
+		MiniUserSchema.omit({ role: true }).optional(),
 })
+export const AggregatedReviewPublicSchema = AggregatedReviewSchema
 
 export const ReviewFilterSchema = z.object({
 	aboutCarId: z.string().optional(),

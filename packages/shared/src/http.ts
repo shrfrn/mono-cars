@@ -6,6 +6,7 @@ export const HttpCodes = {
 	Unauthorized: 401,
 	Forbidden: 403,
 	NotFound: 404,
+	Conflict: 409,
 	UnprocessableEntity: 422,
 	InternalServerError: 500,
 } as const
@@ -19,9 +20,10 @@ export type ErrorCode =
 
   | 'BAD_REQUEST' 
   | 'ENTITY_NOT_FOUND' 
-  | 'VALIDATION_FAILED' 
   | 'NOT_AUTHENTICATED' 
   | 'INSUFFICIENT_PERMISSIONS' 
+  | 'ENTITY_CHANGED' 
+  | 'VALIDATION_FAILED' 
 
   | 'INTERNAL_ERROR'
 

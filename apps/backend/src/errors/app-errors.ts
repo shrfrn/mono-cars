@@ -13,6 +13,7 @@ export class AppError extends Error {
 	}
 }
 
+// Http 4xx errors
 export class EntityNotFoundError extends AppError {
 	constructor(entity = 'Entity') {
 		super(`${entity} not found`, HttpCodes.NotFound)
@@ -48,6 +49,14 @@ export class ForbidenError extends AppError {
 	}
 }
 
+export class ConflictError extends AppError {
+	constructor(message = 'Document changed since you loaded it - reload and retry.') {
+		super(message, HttpCodes.Conflict)
+        this.code = 'ENTITY_CHANGED'
+	}
+}
+
+// Http 5xx errors
 export class InternalServerError extends AppError {
 	constructor(message = 'Internal server error', code: ErrorCode = 'INTERNAL_ERROR' ) {
 		super(message, HttpCodes.InternalServerError)

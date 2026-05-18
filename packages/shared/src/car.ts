@@ -11,13 +11,14 @@ export const CommentSchema = z.object({
     txt: z.string(),
     author: MiniUserSchema,
 })
+export const CommentPublicSchema = CommentSchema // Nothing to hide from Comment
 export const CommentInputSchema = CommentSchema.pick({ txt: true })
 
 export const LikeSchema = z.object({
     createdAt: z.number(),
     by: MiniUserSchema,
 })
-
+export const LikePublicSchema = LikeSchema // Nothing to hide from Like
 
 export const CarFieldsSchema = z.object({
     make: z.string().min(1),
@@ -37,7 +38,10 @@ export const CarBaseInputSchema = CarBaseSchema.omit({
     owner: true 
 })
 
-export const CarPublicSchema = CarSchema    // Nothing to hide in CarSchema
+export const CarPublicSchema = CarSchema.safeExtend({
+	comments: CommentPublicSchema.array().optional(),
+	likedBy: LikePublicSchema.array().optional(),
+})
 
 export const CarFilterSchema = z.object({
     txt: z.string().optional(),
@@ -67,12 +71,8 @@ export const CommentParamsSchema = z.object({
 
 // Car Types
 
-
 export type Car = z.infer<typeof CarSchema>
 export type CarType = z.infer<typeof CarTypeSchema>
-export type Comment = z.infer<typeof CommentSchema>
-export type CommentInput = z.infer<typeof CommentInputSchema>
-export type Like = z.infer<typeof LikeSchema>
 export type CarPublic = z.infer<typeof CarPublicSchema>
 
 export type CarBase = z.infer<typeof CarBaseSchema>
@@ -90,3 +90,10 @@ export type CarQueryOptionsInput = z.input<typeof CarQueryOptionsSchema>
 
 export type CarParams = z.infer<typeof CarParamsSchema>
 export type CommentParams = z.infer<typeof CommentParamsSchema>
+
+export type Comment = z.infer<typeof CommentSchema>
+export type CommentPublic = z.infer<typeof CommentPublicSchema>
+export type CommentInput = z.infer<typeof CommentInputSchema>
+
+export type Like = z.infer<typeof LikeSchema>
+export type LikePublic = z.infer<typeof LikePublicSchema>

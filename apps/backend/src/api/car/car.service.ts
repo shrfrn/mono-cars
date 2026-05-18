@@ -74,16 +74,13 @@ async function patch(carPatch: CarPatch): Promise<Car> {
     const { authUser } = getAsyncStore()!
     if (!authUser) throw new UnauthorizedError()
     
-	const { _id, ...car } = prepareUpdate(carPatch)
+	const { criteria, update } = prepareUpdate(carPatch)
 
-	// Check if the car exists and...
-	const criteria: { _id: ObjectId, 'owner._id'?: string} = { _id: new ObjectId(_id) }
-
-	// ...is owned by the authenticated user or authenticated user is an admin/moderator
+	// If car is owned by the authenticated user or authenticated user is an admin/moderator
 	if (authUser.role !== 'Admin' && authUser.role !== 'Moderator') criteria['owner._id'] = authUser._id
 	
 	const collection = await getCollection<MongoCar>('car')
-	const updated = await collection.findOneAndUpdate(criteria, { $set: car }, { returnDocument: 'after' })
+	const updated = await collection.findOneAndUpdate(criteria, update, { returnDocument: 'after' })
 
 	if (!updated) throw new ForbidenError() // Assuming car exists but with different owner
 	return CarSchema.parse(updated)

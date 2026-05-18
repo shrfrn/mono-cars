@@ -1,21 +1,9 @@
-import fs from 'node:fs'
-
 import { UserSchema } from '@cars/shared'
 import type { User, UserBase, UserQueryOptions } from '@cars/shared'
 
-import { logger } from '../../services/logger.service.js'
-import { makeId } from '../../services/util.service.js'
-
-
-const DATA_FILE = './data/user.json'
-
-import rawData from '#data/user.json' with { type: 'json' }
-import { AppError, EntityNotFoundError } from '../../errors/app-errors.js'
-import { HttpCodes } from '@cars/shared/src/http.js'
+import { EntityNotFoundError } from '../../errors/app-errors.js'
 import { byObjectId, getCollection, prepareInsert } from '#services/db.service.js'
 import { Filter, FindOptions, SortDirection } from 'mongodb'
-
-const users: User[] = UserSchema.array().parse(rawData)
 
 export const userService = {
 	query,

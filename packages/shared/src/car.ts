@@ -1,4 +1,5 @@
 import z from 'zod'
+
 import { createEntitySchemas } from './entity.js'
 import { MiniUserSchema } from './user.js'
 

@@ -51,16 +51,24 @@ export const PermissionRequestSchema = z.discriminatedUnion('action', [
 
 export type PermissionRequest = z.infer<typeof PermissionRequestSchema>
 
+// _PermissionKey = union type of all AbacRules.permissions key literals
+// (i.e. 'car:delete', 'car:update', etc...)
 type _PermissionKey = keyof typeof abacRules.permissions
 
 // Check that every PermissionKey has a PermissionRequest variant definition
+// _Missing = union type of all (AbacRules.permissions key literals - PermissionRequest.action key literals)
 type _Missing = Exclude<_PermissionKey, PermissionRequest['action']>
+
+// _Exhaustive is a conditional type: 
+// if _Missing is an empty union (no keys missing) it evaluates to true
+// if _Missing isn't empty (some keys on AbacRules are missing from PermissionRequest) it becomes a string litral which convays an error msg
 type _Exhaustive = [_Missing] extends [never] 
 ? true 
 : `Missing variant for: ${_Missing & string}`
 
-
+// A declarative assertion which fails to compile if some keys are missing
 true satisfies _Exhaustive
+
 export type PermissionKey = PermissionRequest['action']
 
 const evaluate = createChecker(abacRules)
@@ -72,11 +80,11 @@ export const checkPermission = (request: PermissionRequest) => evaluate(request)
 // Add an entry only when the action diverges from these defaults
 // (e.g. resource is embedded inside the parent, or lives in a non-prefix collection).
 
-export type ActionResolver = {
+export type ResourceResolver = {
 	collection?: string,
 	resolve?: (parent: any, params: any) => unknown,
 }
 
-export const actionResolvers: Partial<Record<PermissionKey, ActionResolver>> = {
+export const resourceResolvers: Partial<Record<PermissionKey, ResourceResolver>> = {
 	'car:deleteComment': { resolve: (car, params) => car.comments?.find((c: Comment) => c.id === params.commentId) },
 }

@@ -1,4 +1,5 @@
 import z from 'zod'
+
 import { createEntitySchemas, EntityIdSchema } from './entity.js'
 import { MiniUserSchema } from './user.js'
 import { CarSchema } from './car.js'
@@ -42,7 +43,9 @@ export const AggregatedReviewSchema = ReviewSchema.omit({
 			})
 			.optional(),
 	byUser: 
-		MiniUserSchema.omit({ role: true }).optional(),
+		MiniUserSchema
+			.omit({ role: true })
+			.optional(),
 })
 export const AggregatedReviewPublicSchema = AggregatedReviewSchema
 

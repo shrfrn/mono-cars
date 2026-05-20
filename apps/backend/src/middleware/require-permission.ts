@@ -5,7 +5,7 @@ import { getAsyncStore } from "./async-store.js"
 import {
 	checkPermission,
 	PermissionRequestSchema,
-	actionResolvers,
+	resourceResolvers,
 	type PermissionKey,
 } from "@cars/shared/src/abac.js"
 import {
@@ -22,10 +22,14 @@ export function requirePermission(action: PermissionKey): RequestHandler {
 		if (!subject) throw new UnauthorizedError()
 
 		const params = res.locals.params
-		if (!params?.id) throw new InternalServerError('requirePermission requires validateRequest(..., "params") to run first')
+		if (!params) throw new InternalServerError('requirePermission requires validateRequest(..., "params") to run first')
+		if (!params.id) throw new InternalServerError('requirePermission requires params schema to include "id"')
 
-		const config = actionResolvers[action] ?? {}
+		// Fetch a resource resolver if one exists for this action or default to - {}
+		const config = resourceResolvers[action] ?? {}
+		// If a collection name exists on the request resolver, use it, otherwise derive it from the action
 		const collectionName = config.collection ?? action.split(':')[0]
+		// If a resolve function exists on the request resolver, use it, otherwise use the parent
 		const resolve = config.resolve ?? (parent => parent)
 
 		const collection = await getCollection(collectionName)

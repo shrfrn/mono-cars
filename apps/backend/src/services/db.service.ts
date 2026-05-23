@@ -1,5 +1,5 @@
 import z from 'zod'
-import { Db, MongoClient, Document, ObjectId, Filter, UpdateFilter } from 'mongodb'
+import { Db, MongoClient, Document, ObjectId, Filter, UpdateFilter, ClientSession } from 'mongodb'
 
 // import { config } from '../config/index.js'
 import type { Entity } from '@cars/shared'
@@ -10,11 +10,19 @@ const config = {
 	dbName: process.env.MONGO_DB_NAME || 'car',
 }
 
-var db: Db | null = null
+// var db: Db | null = null
+const { db, client } = await _connect()
+
+export async function startSession() {
+	return client.startSession()
+}
+
+export async function endSession(session: ClientSession) {
+	session?.endSession()
+}
 
 export async function getCollection<T extends Document>(collectionName: string) {
 	try {
-		const db = await _connect()
 		return db.collection<T>(collectionName)
 	} catch (err) {
 		logger.error('Failed to get Mongo collection', err)
@@ -63,12 +71,14 @@ export const MongoWriteSchema = z.preprocess((val: any) => {
     }
 }, z.any())
 
-async function _connect() {
-	if (db) return db
-    
+async function _connect(): Promise<{ db: Db, client: MongoClient }> {
 	try {
-		const client = await MongoClient.connect(config.dbURL)
-		return db = client.db(config.dbName)
+		const client = new MongoClient(config.dbURL)
+
+		await client.connect()
+		const db = client.db(config.dbName)
+
+		return { db, client }
 	} catch (err) {
 		logger.error('Cannot Connect to DB', err)
 		throw err

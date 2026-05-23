@@ -1,13 +1,14 @@
 import { Filter, FindOptions, ObjectId, SortDirection } from 'mongodb'
 
 import { getAsyncStore } from '#middleware/async-store.js'
-import { getCollection, byObjectId, prepareInsert, prepareUpdate } from '#services/db.service.js'
+import { getCollection, byObjectId, prepareInsert, prepareUpdate, startSession, endSession } from '#services/db.service.js'
 import { makeId } from '#services/util.service.js'
 
 import type { Car, CarBase, CarPatch, CarQueryOptions, Comment } from '@cars/shared'
 import { CarSchema, CommentSchema } from '@cars/shared'
 
 import { EntityNotFoundError, ForbidenError, UnauthorizedError } from '../../errors/app-errors.js'
+import { registerTask } from '#services/outbox.service.js'
 
 export const carService = {
 	query,
@@ -90,19 +91,32 @@ async function addComment(carId: string, txt: string): Promise<Comment> {
 	const { authUser: author } = getAsyncStore()!
 	if (!author) throw new UnauthorizedError()
 
-	const comment = {
+	const comment = CommentSchema.parse({
 		id: makeId(),
 		createdAt: Date.now(),
 		txt,
 		author,
-	}
+	})
 
 	const collection = await getCollection<MongoCar>('car')
+	const session = await startSession()
+	
+	try {
+		await session.withTransaction(async () => {
 
-	const { modifiedCount } = await collection.updateOne(byObjectId(carId), { $push: { comments: comment } })
-	if (modifiedCount === 0) throw new EntityNotFoundError('Car not found')
-
-	return CommentSchema.parse(comment)
+			await registerTask('car.comment.add', comment, session)
+	
+			const { modifiedCount } = 
+				await collection.updateOne(
+					byObjectId(carId), { $push: { comments: comment } }, { session })
+					
+			if (modifiedCount === 0) throw new EntityNotFoundError('Car not found')
+		})
+		
+	} finally {
+		endSession(session)
+	}
+	return comment
 }
 
 async function removeComment(carId: string, commentId: string): Promise<void> {

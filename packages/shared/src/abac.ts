@@ -40,7 +40,6 @@ const abacRules =  defineAbacRules({
 	}
 })
 
-
 const EnvSchema = z.record(z.string(), z.unknown()).optional()
 export const PermissionRequestSchema = z.discriminatedUnion('action', [
 	z.object({ action: z.literal('car:update'),        subject: MiniUserSchema, resource: CarSchema,     env: EnvSchema }),

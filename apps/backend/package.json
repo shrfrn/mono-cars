@@ -19,10 +19,12 @@
   "type": "module",
   "dependencies": {
     "@cars/shared": "^1.0.0",
+    "bullmq": "^5.77.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "cryptr": "^6.4.0",
     "express": "^5.2.1",
+    "ioredis": "^5.10.1",
     "mongodb": "^7.2.0",
     "zod": "^4.3.6"
   },

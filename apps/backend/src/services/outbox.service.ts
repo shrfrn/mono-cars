@@ -1,15 +1,16 @@
 import z from 'zod'
-import { AnyBulkWriteOperation, ClientSession, ObjectId, Document } from 'mongodb'
+import { AnyBulkWriteOperation, ClientSession, ObjectId } from 'mongodb'
 
 import { createEntitySchemas } from '@car/shared'
-import { EventPayload, EventType, EventTypeSchema, EventSchema as PayloadEventSchema } from './event.types.js'
+import { CompletedJob, EventPayload, EventType, EventTypeSchema, EventSchema as PayloadEventSchema } from './event.types.js'
 import { getCollection, prepareInsert } from './db.service.js'
 import { createEventEmitter } from './async-event-bus.js'
+import { Job } from 'bullmq'
 
 const DISPATCH_INTERVAL = 400
 const MAX_ATTEMPTS = 5
 const BATCH_SIZE = parseInt(process.env.OUTBOX_BATCH_SIZE || '10', 10)
-const STUCK_TIMEOUT_MS = parseInt(process.env.STUCK_TIMEOUT_MS || '60000', 60_000) 
+const STUCK_TIMEOUT_MS = parseInt(process.env.STUCK_TIMEOUT_MS || '60000', 10) 
 
 export const outboxDispatcher = createEventEmitter()
 
@@ -17,7 +18,7 @@ const EventStatusSchema = z.enum(['PENDING', 'PROCESSING', 'COMPLETE', 'FAILED']
 type EventStatus = z.infer<typeof EventStatusSchema>
 
 export const EventFieldsSchema = z.object({
-	eventType: EventTypeSchema,
+	evType: EventTypeSchema,
 	payload: z.unknown(),
 	status: EventStatusSchema.default('PENDING'),
 	startedAt: z.date().nullable().default(null),
@@ -36,7 +37,7 @@ type EventBase = z.infer<typeof EventBaseSchema>
 
 export async function registerTask<T extends EventType>(evType: T, payload: EventPayload<T>, session: ClientSession) {
 
-	// Strict validation (Guarantees payload matches eventType)
+	// Strict validation (Guarantees payload matches evType)
 	const validEvent = PayloadEventSchema.parse({ evType, payload })
 	// Add metadata (We know the payload is correct, so z.unknown() is safe here)
 	const eventBase = EventBaseSchema.parse(validEvent)	
@@ -46,12 +47,26 @@ export async function registerTask<T extends EventType>(evType: T, payload: Even
 	await taskOutbox.insertOne(preparedEvent, { session })
 }
 
+export async function registerCompletedTask(job: Job, session: ClientSession) {
+	if (!job.id) return 
+	
+	const completedJobs = await getCollection<CompletedJob>('completedJobs')
+	await completedJobs.insertOne({
+		_id: job.id,
+		completedAt: new Date(),
+		taskId: job.data._id,
+		jobName: job.name,
+	}, { session })
+}
+
+type OutboxDoc = Omit<Event, '_id'> & { _id: ObjectId }
+
 export async function dispatchOutbox() {
 	try {
 		// Calculate the cutoff time for stuck tasks
 		const stuckCutoff = new Date(Date.now() - STUCK_TIMEOUT_MS)
-		
-		const taskOutbox = await getCollection('taskOutbox')
+
+		const taskOutbox = await getCollection<OutboxDoc>('taskOutbox')
 		const tasks = await taskOutbox.find({ $or: [
 			{ status: 'PENDING' },
 			{ status: 'PROCESSING', startedAt: { $lt: stuckCutoff }}
@@ -62,11 +77,15 @@ export async function dispatchOutbox() {
 		const taskIds = tasks.map(task => task._id)
 		await taskOutbox.updateMany({ _id: { $in: taskIds } },{ $set: { status: 'PROCESSING' }})
 
-		const emitPrms = tasks.map(task => outboxDispatcher.emit(task.eventType, task.payload))
+		const emitPrms = tasks.map(task => 
+			outboxDispatcher.emit(task.evType, { 
+				_id: task._id.toHexString(), 
+				payload: task.payload as EventPayload<typeof task.evType>
+			}))
 		const results = await Promise.allSettled(emitPrms)
 
 		const successIds: ObjectId[] = []
-		const failedUpdates: AnyBulkWriteOperation<Document>[] = []
+		const failedUpdates: AnyBulkWriteOperation<OutboxDoc>[] = []
 
 		results.forEach((result, idx) => {
 			const task = tasks[idx]
@@ -105,7 +124,7 @@ function _composeUpdate(status: EventStatus, attempts: number, result: PromiseRe
 		$set: {
 			status,
 			attempts,
-			errorReson: result.reason?.message || 'Unknown error',
+			errorReason: result.reason?.message || 'Unknown error',
 		}
 	}
 }

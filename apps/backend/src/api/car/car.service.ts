@@ -8,7 +8,7 @@ import type { Car, CarBase, CarPatch, CarQueryOptions, Comment } from '@cars/sha
 import { CarSchema, CommentSchema } from '@cars/shared'
 
 import { EntityNotFoundError, ForbidenError, UnauthorizedError } from '../../errors/app-errors.js'
-import { registerTask } from '#services/outbox.service.js'
+import { outbox } from '#events/queues.config.js'
 
 export const carService = {
 	query,
@@ -104,7 +104,7 @@ async function addComment(carId: string, txt: string): Promise<Comment> {
 	try {
 		await session.withTransaction(async () => {
 
-			await registerTask('car.comment.add', comment, session)
+			await outbox.registerTask('car.comment.add', comment, session)
 	
 			const { modifiedCount } = 
 				await collection.updateOne(

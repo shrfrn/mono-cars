@@ -11,7 +11,8 @@
   "imports": {
     "#services/*": "./src/services/*",
     "#data/*": "./data/*",
-    "#middleware/*": "./src/middleware/*"
+    "#middleware/*": "./src/middleware/*",
+    "#events/*": "./src/events/*"
   },
   "keywords": [],
   "author": "",

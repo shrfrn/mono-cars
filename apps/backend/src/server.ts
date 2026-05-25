@@ -15,6 +15,8 @@ import { reviewRoutes } from './api/review/review.routes.js'
 
 import { errorHandler } from '#middleware/error-handler.js'
 
+import '#events/queues.config.js'    // Boots the outbox dispatcher and BullMQ queues/workers
+
 const app = express()
 const server = http.createServer(app)
 

@@ -17,5 +17,6 @@
 			"path": "apps/backend"
 		}
 	],
-    "settings": {}
+	"settings": {
+	}
 }

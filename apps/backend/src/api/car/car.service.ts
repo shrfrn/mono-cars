@@ -1,7 +1,7 @@
 import { Filter, FindOptions, ObjectId, SortDirection } from 'mongodb'
 
 import { getAsyncStore } from '#middleware/async-store.js'
-import { getCollection, byObjectId, prepareInsert, prepareUpdate, startSession, endSession } from '#services/db.service.js'
+import { getCollection, byObjectId, prepareInsert, prepareUpdate, withTransactionalSession } from '#services/db.service.js'
 import { makeId } from '#services/util.service.js'
 
 import type { Car, CarBase, CarPatch, CarQueryOptions, Comment } from '@cars/shared'
@@ -99,23 +99,17 @@ async function addComment(carId: string, txt: string): Promise<Comment> {
 	})
 
 	const collection = await getCollection<MongoCar>('car')
-	const session = await startSession()
-	
-	try {
-		await session.withTransaction(async () => {
 
-			await outbox.registerTask('car.comment.add', comment, session)
-	
-			const { modifiedCount } = 
-				await collection.updateOne(
-					byObjectId(carId), { $push: { comments: comment } }, { session })
-					
-			if (modifiedCount === 0) throw new EntityNotFoundError('Car not found')
-		})
-		
-	} finally {
-		endSession(session)
-	}
+	await withTransactionalSession(async session => {
+		await outbox.registerTask('car.comment.add', comment, session)
+
+		const { modifiedCount } =
+			await collection.updateOne(
+				byObjectId(carId), { $push: { comments: comment } }, { session })
+
+		if (modifiedCount === 0) throw new EntityNotFoundError('Car not found')
+	})
+
 	return comment
 }
 

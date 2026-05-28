@@ -3,8 +3,10 @@ import path from 'node:path'
 import type { Request, Response, NextFunction } from 'express'
 import { ApiErrorResponse, HttpCodes } from '@cars/shared/src/http.js'
 import { ZodError, z } from 'zod'
+import type { MongoError } from 'mongodb'
 import { logger } from '#services/logger.service.js'
 import { AppError } from '../errors/app-errors.js'
+import { isMongoError, mapMongoError } from '../errors/mongo-errors.js'
 
 const isDev = process.env.NODE_ENV !== 'production'
 
@@ -14,8 +16,15 @@ export function errorHandler(err: Error, req: Request, res: Response<ApiErrorRes
 
 	if (err instanceof ZodError) return _sendZodError(err, res)
 	if (err instanceof AppError) return _sendAppError(err, res)
+	if (isMongoError(err)) return _sendMongoError(err, res)
 
 	_sendUnexpected(err, res)
+}
+
+
+function _sendMongoError(err: MongoError | Error, res: Response<ApiErrorResponse>) {
+	const mapped = mapMongoError(err)
+	return _sendAppError(mapped, res)
 }
 
 

@@ -1,7 +1,6 @@
 import z from 'zod'
 import { Db, MongoClient, Document, ObjectId, Filter, UpdateFilter, ClientSession } from 'mongodb'
 
-// import { config } from '../config/index.js'
 import type { Entity } from '@cars/shared'
 import { logger } from './logger.service.js'
 
@@ -10,7 +9,6 @@ const config = {
 	dbName: process.env.MONGO_DB_NAME || 'car',
 }
 
-// var db: Db | null = null
 const { db, client } = await _connect()
 
 export async function startSession() {
@@ -21,18 +19,39 @@ export async function endSession(session: ClientSession) {
 	session?.endSession()
 }
 
-export async function getCollection<T extends Document>(collectionName: string) {
+export async function withTransactionalSession<T>(
+	fn: (session: ClientSession) => Promise<T>,
+	options?: { timeoutMS?: number },
+): Promise<T> {
+	const session = await startSession()
+
 	try {
-		return db.collection<T>(collectionName)
-	} catch (err) {
-		logger.error('Failed to get Mongo collection', err)
-		throw err
+		return await session.withTransaction(() => fn(session), options)
+	} finally {
+		await endSession(session)
 	}
 }
 
+export async function pingDb(): Promise<boolean> {
+	try {
+		await db.command({ ping: 1 })
+		return true
+	} catch {
+		return false
+	}
+}
+
+export async function closeDb() {
+	await client.close()
+}
+
+export async function getCollection<T extends Document>(collectionName: string) {
+	return db.collection<T>(collectionName)
+}
+
 export function byObjectId<T extends Entity>(docOrId: T | string) {
-	return typeof docOrId === 'string' ? 
-		{ _id: new ObjectId(docOrId) } : 
+	return typeof docOrId === 'string' ?
+		{ _id: new ObjectId(docOrId) } :
 		{ _id: new ObjectId(docOrId._id) }
 }
 
@@ -47,28 +66,28 @@ export function prepareUpdate<T extends { _id: string, _version?: number }>(doc:
 	if (_version !== undefined) criteria._version = _version
 
 	const update: UpdateFilter<Document> = {
-		$set, 
-		$inc: { _version: 1 }, 
-		$currentDate: { _updatedAt: true }
+		$set,
+		$inc: { _version: 1 },
+		$currentDate: { _updatedAt: true },
 	}
-	return { criteria, update } 
+	return { criteria, update }
 }
 
 export const MongoWriteSchema = z.preprocess((val: any) => {
-    if (val === null || typeof val !== 'object') return val;
-	
+	if (val === null || typeof val !== 'object') return val
+
 	mutateIds(val)
 	return val
-    
-    function mutateIds(obj: any) {
-        if (!obj || typeof obj !== 'object') return
-        
-        if (typeof obj._id === 'string' && obj._id.length === 24) {
-            obj._id = new ObjectId(obj._id)
-        }
-        
-        Object.values(obj).forEach(mutateIds)
-    }
+
+	function mutateIds(obj: any) {
+		if (!obj || typeof obj !== 'object') return
+
+		if (typeof obj._id === 'string' && obj._id.length === 24) {
+			obj._id = new ObjectId(obj._id)
+		}
+
+		Object.values(obj).forEach(mutateIds)
+	}
 }, z.any())
 
 async function _connect(): Promise<{ db: Db, client: MongoClient }> {
@@ -80,7 +99,7 @@ async function _connect(): Promise<{ db: Db, client: MongoClient }> {
 
 		return { db, client }
 	} catch (err) {
-		logger.error('Cannot Connect to DB', err)
-		throw err
+		logger.error('Cannot connect to DB', err)
+		process.exit(1)
 	}
 }

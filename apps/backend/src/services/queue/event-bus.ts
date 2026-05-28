@@ -1,10 +1,16 @@
 // Generic typed in-process event emitter. Knows nothing about any specific
 // event catalog - the caller parameterizes it with their own event map.
 
+import { logger } from '#services/logger.service.js'
+
 export type DefaultHandler = ((evType: string, payload: unknown) => Promise<void>)
 
+async function logUnhandledEvent(evType: string, payload: unknown) {
+	logger.warn(`No handlers registered for event: ${evType}`, payload)
+}
+
 export function createEventEmitter<TMap extends Record<string, unknown>>(
-	defaultHandler: DefaultHandler | null = null
+	defaultHandler: DefaultHandler = logUnhandledEvent,
 ) {
 	type EvKey = keyof TMap & string
 	type Handler<K extends EvKey> = (payload: TMap[K]) => Promise<void>
@@ -31,16 +37,23 @@ export function createEventEmitter<TMap extends Record<string, unknown>>(
 		async emit<K extends EvKey>(ev: K, payload: TMap[K]) {
 			const list = handlers.get(ev)
 
-			if (!list) {
-				if (defaultHandler) await defaultHandler(ev, payload)
+			if (!list?.length) {
+				await defaultHandler(ev, payload)
 				return
 			}
 
-			const prms = list.map(handler => handler(payload))
-			return await Promise.all(prms)
+			const results = await Promise.allSettled(list.map(handler => handler(payload)))
+			const rejections = results.filter(r => r.status === 'rejected') as PromiseRejectedResult[]
+
+			rejections.forEach(r =>
+				logger.warn(`Event handler failed: ${ev}`, r.reason))
+
+			if (rejections.length === results.length) {
+				throw rejections[0].reason
+			}
 		},
 	}
 }
 
-export type EventEmitter<TMap extends Record<string, unknown>> = 
+export type EventEmitter<TMap extends Record<string, unknown>> =
 	ReturnType<typeof createEventEmitter<TMap>>

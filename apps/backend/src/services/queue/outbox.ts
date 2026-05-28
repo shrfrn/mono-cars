@@ -6,7 +6,10 @@
 import z from 'zod'
 import { AnyBulkWriteOperation, ClientSession, Collection, ObjectId, WithId } from 'mongodb'
 
+import { AppError } from '../../errors/app-errors.js'
+import { isTransientMongoError } from '../../errors/mongo-errors.js'
 import { getCollection } from '#services/db.service.js'
+import { logger } from '#services/logger.service.js'
 
 import type { EventEmitter } from './event-bus.js'
 
@@ -27,6 +30,23 @@ export type CreateOutboxOptions<TMap extends Record<string, OutboxTask<unknown>>
 
 const EventStatusSchema = z.enum(['PENDING', 'PROCESSING', 'COMPLETE', 'FAILED'])
 type EventStatus = z.infer<typeof EventStatusSchema>
+
+type DispatchPhase = 'fetch' | 'claim' | 'emit' | 'complete' | 'fail-write'
+
+export class OutboxDispatchError extends Error {
+	phase: DispatchPhase
+	taskIds: string[]
+	transient: boolean
+
+	constructor(phase: DispatchPhase, taskIds: ObjectId[], cause: unknown) {
+		const message = cause instanceof Error ? cause.message : 'Outbox dispatch failed'
+		super(message, { cause })
+		this.name = 'OutboxDispatchError'
+		this.phase = phase
+		this.taskIds = taskIds.map(id => id.toHexString())
+		this.transient = isTransientMongoError(cause)
+	}
+}
 
 export function createOutbox<TMap extends Record<string, OutboxTask<unknown>>>(opts: CreateOutboxOptions<TMap>) {
 	const {
@@ -65,7 +85,6 @@ export function createOutbox<TMap extends Record<string, OutboxTask<unknown>>>(o
 	async function registerTask<K extends keyof TMap & string>(
 		evType: K, payload: TMap[K]['payload'], session: ClientSession
 	) {
-		// Strict validation (Guarantees payload matches evType)
 		const validEvent = eventSchema.parse({ evType, payload })
 		const doc = OutboxInsertSchema.parse(validEvent)
 
@@ -88,72 +107,86 @@ export function createOutbox<TMap extends Record<string, OutboxTask<unknown>>>(o
 		try {
 			await dispatchTaskBatch()
 		} catch (err) {
-			console.error('Critical error in outbox dispatcher:', err)
+			_logDispatchError(err)
 		} finally {
 			if (isRunning) timerId = setTimeout(dispatchLoop, dispatchInterval)
 		}
 	}
 
 	async function dispatchTaskBatch() {
-
 		const taskOutbox = await getCollection<OutboxDoc>(collectionName)
+		let phase: DispatchPhase = 'fetch'
+		let taskIds: ObjectId[] = []
 
-		const tasks = await _fetchTasks(taskOutbox)
-		if (tasks.length === 0) return
+		try {
+			phase = 'fetch'
+			const stuckCutoff = new Date(Date.now() - stuckTimeoutMs)
+			const rawTasks = await taskOutbox.find({ $or: [
+				{ status: 'PENDING' },
+				{ status: 'PROCESSING', startedAt: { $lt: stuckCutoff } },
+			]}).limit(batchSize).toArray()
 
-		const results = await _emitEvents(tasks)
-		
-		const successIds: ObjectId[] = []
-		const failedUpdates: AnyBulkWriteOperation<OutboxDoc>[] = []
-		const taskIds = tasks.map(task => task._id)
+			if (rawTasks.length === 0) return
 
-		results.forEach((result, idx) => {
-			const task = tasks[idx]
+			taskIds = rawTasks.map(task => task._id)
 
-			if (result.status === 'fulfilled') {
-				successIds.push(taskIds[idx])
-			} else {
-				const status: EventStatus = task.attempts >= maxAttempts ? 'FAILED' : 'PENDING'
-				failedUpdates.push({
-					updateOne: {
-						filter: { _id: task._id },
-						update: _composeUpdate(status, result),
-					},
-				})
+			phase = 'claim'
+			const tasks = await _claimTasks(taskOutbox, rawTasks)
+
+			phase = 'emit'
+			const results = await _emitEvents(tasks)
+
+			const successIds: ObjectId[] = []
+			const failedUpdates: AnyBulkWriteOperation<OutboxDoc>[] = []
+
+			results.forEach((result, idx) => {
+				const task = tasks[idx]
+
+				if (result.status === 'fulfilled') {
+					successIds.push(task._id)
+				} else {
+					const status: EventStatus = task.attempts >= maxAttempts ? 'FAILED' : 'PENDING'
+					failedUpdates.push({
+						updateOne: {
+							filter: { _id: task._id },
+							update: _composeUpdate(status, result),
+						},
+					})
+				}
+			})
+
+			phase = 'complete'
+			if (successIds.length > 0) {
+				await taskOutbox.updateMany(
+					{ _id: { $in: successIds } },
+					{ $set: { status: 'COMPLETE' } },
+				)
 			}
-		})
 
-		if (successIds.length > 0) {
-			await taskOutbox.updateMany({ _id: { $in: successIds } }, { $set: { status: 'COMPLETE' } })
-		}
-
-		if (failedUpdates.length > 0) {
-			await taskOutbox.bulkWrite(failedUpdates)
+			phase = 'fail-write'
+			if (failedUpdates.length > 0) await taskOutbox.bulkWrite(failedUpdates)
+		} catch (err) {
+			throw new OutboxDispatchError(phase, taskIds, err)
 		}
 	}
-	
-	async function _fetchTasks(taskOutbox: Collection<OutboxDoc>) {
-		const stuckCutoff = new Date(Date.now() - stuckTimeoutMs)
 
-		const tasks = await taskOutbox.find({ $or: [
-			{ status: 'PENDING' },
-			{ status: 'PROCESSING', startedAt: { $lt: stuckCutoff } },
-		]}).limit(batchSize).toArray()
-
+	async function _claimTasks(taskOutbox: Collection<OutboxDoc>, rawTasks: WithId<OutboxDoc>[]) {
 		const startedAt = new Date()
-		const taskIds = tasks.map(task => task._id)
+		const taskIds = rawTasks.map(task => task._id)
+
 		await taskOutbox.updateMany(
-			{ _id: { $in: taskIds } }, 
-			{ 
+			{ _id: { $in: taskIds } },
+			{
 				$set: { status: 'PROCESSING', startedAt },
 				$inc: { attempts: 1 },
-			 })
+			},
+		)
 
-		return tasks.map(task => ({ 
-			...task, 
-			startedAt, 
-			status: 'PROCESSING' as const, 
-			attempts: (task.attempts ?? 0) + 1 
+		return rawTasks.map(task => ({
+			...task,
+			startedAt,
+			status: 'PROCESSING' as const,
+			attempts: (task.attempts ?? 0) + 1,
 		}))
 	}
 
@@ -167,11 +200,29 @@ export function createOutbox<TMap extends Record<string, OutboxTask<unknown>>>(o
 	}
 }
 
+function _logDispatchError(err: unknown) {
+	if (err instanceof OutboxDispatchError) {
+		logger.error(
+			`Outbox dispatch failed [${err.phase}] batchSize=${err.taskIds.length} transient=${err.transient}`,
+			{ taskIds: err.taskIds, err: err.cause },
+		)
+		return
+	}
+
+	logger.error('Outbox dispatch failed', err)
+}
+
 function _composeUpdate(status: EventStatus, result: PromiseRejectedResult) {
 	return {
 		$set: {
 			status,
-			errorReason: result.reason?.message || 'Unknown error',
+			errorReason: _formatErrorReason(result.reason),
 		},
 	}
+}
+
+function _formatErrorReason(reason: unknown) {
+	if (reason instanceof AppError) return reason.message
+	if (reason instanceof Error) return reason.message
+	return 'Unknown error'
 }

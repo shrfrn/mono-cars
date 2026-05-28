@@ -230,6 +230,11 @@ function _formatErrorReason(reason: unknown) {
 	return 'Unknown error'
 }
 
+export const outboxTestUtils = {
+	composeUpdate: _composeUpdate,
+	formatErrorReason: _formatErrorReason,
+}
+
 function _logTaskDispatchFailure(
 	task: { _id: ObjectId, evType: string, attempts: number },
 	status: EventStatus,

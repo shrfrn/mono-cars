@@ -187,6 +187,10 @@ function _isNonRetryableJobError(err: unknown) {
 	return err.httpCode < HttpCodes.InternalServerError
 }
 
+export const jobQueueTestUtils = {
+	isNonRetryableJobError: _isNonRetryableJobError,
+}
+
 function _wireEmitter<TMap extends Record<string, OutboxTask<unknown>>>(
 	emitter: EventEmitter<TMap>,
 	queue: Queue,

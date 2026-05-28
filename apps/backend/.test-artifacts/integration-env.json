@@ -1,0 +1,1 @@
+{"mongoUrl":"mongodb://localhost:55013?replicaSet=rs0&retryWrites=false&directConnection=true","redisUrl":"redis://localhost:55014"}

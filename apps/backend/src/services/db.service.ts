@@ -100,6 +100,7 @@ async function _connect(): Promise<{ db: Db, client: MongoClient }> {
 		return { db, client }
 	} catch (err) {
 		logger.error('Cannot connect to DB', err)
+		if (process.env.NODE_ENV === 'test') throw err
 		process.exit(1)
 	}
 }

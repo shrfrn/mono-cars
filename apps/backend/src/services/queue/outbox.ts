@@ -146,6 +146,9 @@ export function createOutbox<TMap extends Record<string, OutboxTask<unknown>>>(o
 					successIds.push(task._id)
 				} else {
 					const status: EventStatus = task.attempts >= maxAttempts ? 'FAILED' : 'PENDING'
+
+					_logTaskDispatchFailure(task, status, result.reason)
+
 					failedUpdates.push({
 						updateOne: {
 							filter: { _id: task._id },
@@ -225,4 +228,26 @@ function _formatErrorReason(reason: unknown) {
 	if (reason instanceof AppError) return reason.message
 	if (reason instanceof Error) return reason.message
 	return 'Unknown error'
+}
+
+function _logTaskDispatchFailure(
+	task: { _id: ObjectId, evType: string, attempts: number },
+	status: EventStatus,
+	reason: unknown,
+) {
+	const message = `Outbox task dispatch failed: ${task.evType}`
+	const metadata = {
+		taskId: task._id.toHexString(),
+		evType: task.evType,
+		attempts: task.attempts,
+		status,
+		reason: _formatErrorReason(reason),
+	}
+
+	if (status === 'FAILED') {
+		logger.error(message, metadata)
+		return
+	}
+
+	logger.warn(message, metadata)
 }

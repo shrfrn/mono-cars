@@ -70,7 +70,6 @@ server.listen(port, () => {
 
 async function shutdown(signal: string) {
 	logger.info(`${signal} received — shutting down`)
-
 	outbox.stop()
 
 	try {

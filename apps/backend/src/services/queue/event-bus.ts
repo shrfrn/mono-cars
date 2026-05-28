@@ -48,9 +48,7 @@ export function createEventEmitter<TMap extends Record<string, unknown>>(
 			rejections.forEach(r =>
 				logger.warn(`Event handler failed: ${ev}`, r.reason))
 
-			if (rejections.length === results.length) {
-				throw rejections[0].reason
-			}
+			if (rejections.length > 0) throw rejections[0].reason
 		},
 	}
 }

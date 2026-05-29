@@ -1,4 +1,8 @@
-import { CarTypeSchema, type CarQueryOptions, type CarSortField, type CarType } from '@cars/shared'
+import { Input } from '@/components/ui/input'
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group'
+import { CarTypeSchema, type CarQueryOptions, type CarType } from '@cars/shared'
+import { ArrowDownWideNarrow, ArrowUpNarrowWide } from 'lucide-react';
 import { useEffect, useState } from "react";
 
 export type CarFilterProps = {
@@ -23,73 +27,93 @@ export function CarFilter({ queryOptions, setQueryOptions }: CarFilterProps) {
         })
     }
 
-    function onSetCarType(ev: React.ChangeEvent<HTMLSelectElement>) {
-        const value = ev.target.value ? ev.target.value as CarType : undefined
+    function onSetCarType(value: CarType) {
+		setQueryOptionsToEdit(prev => { 
+			const filterBy = { ...prev.filterBy, type: value }
+			if (!value) delete filterBy.type
 
-        setQueryOptionsToEdit(prev => { 
-            const filterBy = { ...prev.filterBy, type: value }
             return { ...prev, filterBy }
         })
 }
 
-    function onSetSortField(ev: React.ChangeEvent<HTMLSelectElement>) {
-        const value = ev.target.value ? ev.target.value as CarSortField : undefined
+    function onSetSortField(values) {
+		const sortField = values[0]
 
         setQueryOptionsToEdit(prev => { 
-            const sortBy = { ...prev.sortBy, sortDir: prev.sortBy?.sortDir || 1, sortField: value }
+            const sortBy = { ...prev.sortBy, sortDir: prev.sortBy?.sortDir || 1, sortField: values[0] }
+			if (!sortField) delete sortBy.sortField
             return { ...prev, sortBy }
         })
     }
 
-    function onToggleSortDir() {
+	function onSetSortDir(values) {
+		const sortDir = values[0] ? values[0] : 1
+
         setQueryOptionsToEdit(prev => {
             const { sortBy } = prev
-            const sortDir = sortBy?.sortDir === 1 ? -1 : 1
-            
             return { ...prev, sortBy: { ...sortBy, sortDir }}
-        })
-    }
+		})
+	}
 
-    return <div className="query-options">
-        <input 
-            value={filterBy?.txt}
-            onChange={onSetQueryOptions}
-            type="text" 
-            name="txt"
-            placeholder="search by make"/>
-            
-        <input 
-            value={filterBy?.minSpeed}
-            onChange={onSetQueryOptions}
-            type="number" 
-            name="minSpeed"
-            placeholder="min. speed"/>
-            
-        <select
-            value={filterBy?.type}
-            onChange={onSetCarType}>
+    return <div className="query-options flex gap-2 items-center">
+        <fieldset className='mr-6'>
+			<legend>
+				<span className="text-xs text-muted-foreground">Filter</span>
+			</legend>
+			<div className="filter-by flex gap-2">
+				<Input
+					value={filterBy?.txt}
+					onChange={onSetQueryOptions}
+					type="text"
+					name="txt"
+					placeholder="search by make"/>
+				
+				<Input
+					value={filterBy?.minSpeed || ''}
+					onChange={onSetQueryOptions}
+					type="number"
+					name="minSpeed"
+					placeholder="min. speed"/>
+				
+				<Select
+					value={filterBy?.type ?? ''}
+					onValueChange={onSetCarType}>
+								<SelectTrigger className="w-full max-w-48">
+									<SelectValue placeholder="Select Car Type"/>
+								</SelectTrigger>
+								<SelectContent alignItemWithTrigger={false}>
+									<SelectGroup>
+										<SelectItem value="">Select Car Type</SelectItem>
+										{CarTypeSchema.options.map(type => 
+											<SelectItem value={type} key={type}>{type}</SelectItem>)}
+									</SelectGroup>
+								</SelectContent>
+				</Select>
+			</div>
+		</fieldset>
+		<fieldset>
+			<legend>
+				<span className="text-xs text-muted-foreground">Sort</span>
+			</legend>
+			<div className="sort-by flex gap-2">
+				<ToggleGroup 
+					variant='outline' 
+					spacing={0}
+					value={sortBy?.sortField ? [sortBy.sortField] : []}
+					onValueChange={onSetSortField}>
+						<ToggleGroupItem value='make'>Make</ToggleGroupItem>
+						<ToggleGroupItem value='maxSpeed'>Speed</ToggleGroupItem>
+				</ToggleGroup>
 
-                <option value="">select car type</option>
-                {CarTypeSchema.options.map(type => 
-                    <option value={type} key={type}>{type}</option>)}
-        </select>
-            
-        <select
-            value={sortBy?.sortField}
-            onChange={onSetSortField}>
-
-                <option value="">select sort field</option>
-                <option value="make">make</option>
-                <option value="maxSpeed">maxSpeed</option>
-        </select>
-
-        <label htmlFor="sort-dir">Descending</label>
-        <input 
-            checked={sortBy?.sortDir === -1}
-            onChange={onToggleSortDir}
-            id="sort-dir"
-            name="sortDir"
-            type="checkbox" />
-
+				<ToggleGroup 
+					variant='outline' 
+					spacing={0}
+					value={sortBy?.sortDir ? [String(sortBy.sortDir)] : []}
+					onValueChange={onSetSortDir}>
+						<ToggleGroupItem value='1'><ArrowUpNarrowWide /></ToggleGroupItem>
+						<ToggleGroupItem value='-1'><ArrowDownWideNarrow /></ToggleGroupItem>
+				</ToggleGroup>
+			</div>
+		</fieldset>
     </div>
 }

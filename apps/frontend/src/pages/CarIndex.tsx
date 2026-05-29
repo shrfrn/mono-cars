@@ -6,6 +6,7 @@ import type { CarQueryOptions } from '@cars/shared'
 import { carService } from "../services/car"
 import { CarList } from "../cmps/CarList.tsx"
 import { CarFilter } from "../cmps/CarFilter.tsx"
+import { Button } from "@/components/ui/button.tsx"
 
 export function CarIndex() {
     const [cars, setCars ] = useState<Car[] | undefined>(undefined)
@@ -29,8 +30,12 @@ export function CarIndex() {
     if (!cars) return <h1>Cars</h1>
 
     return <div className="car-index">
-        <Link to="edit">Add a Car</Link>
-        <CarFilter queryOptions={carQueryOptions} setQueryOptions={setCarQueryOptions}/>
+		<header className="flex justify-between items-end py-3 mb-4">
+			<CarFilter queryOptions={carQueryOptions} setQueryOptions={setCarQueryOptions}/>
+			<Link to="edit">
+				<Button>Add a Car</Button>
+			</Link>
+		</header>
         <CarList cars={cars} onRemoveCar={onRemoveCar}/>
     </div>
 }

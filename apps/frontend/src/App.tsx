@@ -17,20 +17,25 @@ import { ReviewIndex } from './pages/ReviewIndex'
 function App() {
 	const [loggedInUser, setLoggedInUser] = useState<MiniUser | null>(authService.getLoggedInUser())
 
-    return <Router>
-        <AppHeader loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser}/>
-        <Routes>
-            <Route path='/' element={<Home />}/>
-            <Route path='/about' element={<About />}/>
-            {/* <Route path='/user' element={<UserIndex />}/> */}
-            <Route path='/car' element={<CarIndex />}/>
-            <Route path='/car/edit/:carId?' element={<CarEdit />}/>
-            <Route path='/car/:carId' element={<CarDetails />}/>
-            <Route path='/review' element={<ReviewIndex />}/>
-            <Route path='/login' element={<Login setLoggedInUser={setLoggedInUser}/>}/>
-        </Routes>
-
-    </Router>
+	return (
+		<Router>
+			<div className="main-layout">
+				<AppHeader loggedInUser={loggedInUser} setLoggedInUser={setLoggedInUser} />
+				<main>
+					<Routes>
+						<Route path="/" element={<Home />} />
+						<Route path="/about" element={<About />} />
+						{/* <Route path='/user' element={<UserIndex />}/> */}
+						<Route path="/car" element={<CarIndex />} />
+						<Route path="/car/edit/:carId?" element={<CarEdit />} />
+						<Route path="/car/:carId" element={<CarDetails />} />
+						<Route path="/review" element={<ReviewIndex />} />
+						<Route path="/login" element={<Login setLoggedInUser={setLoggedInUser} />} />
+					</Routes>
+				</main>
+			</div>
+		</Router>
+	)
 }
 
 export default App

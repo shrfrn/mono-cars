@@ -1,0 +1,16 @@
+{
+	"name": "seed",
+	"version": "1.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"seed": "tsx seed-demo.ts"
+	},
+	"dependencies": {
+		"@cars/shared": "^1.0.0",
+		"mongodb": "^7.2.0"
+	},
+	"devDependencies": {
+		"tsx": "^4.21.0"
+	}
+}

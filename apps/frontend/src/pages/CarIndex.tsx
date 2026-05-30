@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import { LikeSchema, type Car } from '@cars/shared'
 import type { CarQueryOptions } from '@cars/shared'
 import { carService } from "../services/car"
-import { CarList } from "../cmps/CarList.tsx"
+import { CarList } from "../cmps/car/CarList.tsx"
 import { CarFilter } from "../cmps/CarFilter.tsx"
 import { Button } from "@/components/ui/button.tsx"
 import { authService } from "../services/auth"

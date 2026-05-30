@@ -1,4 +1,5 @@
 export * from './entity.js'
-export * from './car.js'
 export * from './user.js'
+export * from './car.js'
+export * from './user-profile.js'
 export * from './review.js'

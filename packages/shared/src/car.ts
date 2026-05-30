@@ -44,6 +44,14 @@ export const CarPublicSchema = CarSchema.safeExtend({
 	likedBy: LikePublicSchema.array().optional(),
 })
 
+export const MiniCarSchema = CarSchema.pick({
+	_id: true,
+	make: true,
+	maxSpeed: true,
+	type: true,
+	owner: true,
+})
+
 export const CarFilterSchema = z.object({
     txt: z.string().optional(),
     minSpeed: z.coerce.number().nonnegative().optional(),
@@ -75,6 +83,7 @@ export const CommentParamsSchema = z.object({
 export type Car = z.infer<typeof CarSchema>
 export type CarType = z.infer<typeof CarTypeSchema>
 export type CarPublic = z.infer<typeof CarPublicSchema>
+export type MiniCar = z.infer<typeof MiniCarSchema>
 
 export type CarBase = z.infer<typeof CarBaseSchema>
 export type CarBaseInput = z.input<typeof CarBaseInputSchema>

@@ -1,18 +1,20 @@
-import { UserSchema } from '@cars/shared'
-import type { User, UserBase, UserQueryOptions } from '@cars/shared'
+import { UserProfileSchema, UserSchema } from '@cars/shared'
+import type { Car, User, UserBase, UserProfile, UserQueryOptions } from '@cars/shared'
 
 import { EntityNotFoundError } from '../../errors/app-errors.js'
 import { byObjectId, getCollection, prepareInsert } from '#services/db.service.js'
-import { Filter, FindOptions, SortDirection } from 'mongodb'
+import { Filter, FindOptions, ObjectId, SortDirection } from 'mongodb'
 
 export const userService = {
 	query,
 	getById,
+	getUserProfile,
     getByUsername,
 	post,
 }
 
 type MongoUser = Omit<User, '_id'>
+type MongoCar = Omit<Car, '_id'>
 
 async function query(queryOptions: UserQueryOptions): Promise<User[]> {
 	const { criteria, sort } = _parseQueryOptions(queryOptions)
@@ -31,6 +33,22 @@ async function getById(userId: string): Promise<User> {
 	if (!user) throw new EntityNotFoundError(`User with _id ${userId}`)
 
     return UserSchema.parse(user)
+}
+
+async function getUserProfile(userId: string): Promise<UserProfile> {
+	const userCollection = await getCollection<MongoUser>('user')
+	
+	const user = await userCollection.findOne(byObjectId(userId))
+	if (!user) throw new EntityNotFoundError(`User with _id ${userId}`)
+		
+	const pipeline = _buildProfilePipeline(userId)
+	const carCollection = await getCollection<MongoCar>('car')
+
+	const [facetResult] = await carCollection.aggregate(pipeline).toArray()
+	const { comments = [], likedCars = [] } = facetResult ?? {}
+
+	const profile = { ...user, comments, likedCars }
+    return UserProfileSchema.parse(profile)
 }
 
 async function getByUsername(username: string): Promise<User | undefined> {
@@ -70,4 +88,49 @@ function _parseQueryOptions(queryOptions: UserQueryOptions) {
     }
 
     return { criteria, sort }
+}
+
+function _buildProfilePipeline(userId: string) {
+	const match = {
+		$or : [
+			{ 'likedBy.by._id': userId },
+			{ 'comments.author._id': userId },
+		]
+	}
+
+	const miniCar = {
+		_id: '$_id',
+		make: '$make',
+		maxSpeed: '$maxSpeed',
+		type: '$type',
+		owner: '$owner'
+	}
+
+	const commentProjection = {
+		_id: 0,
+		id: '$comments.id',
+		txt: '$comments.txt',
+		createdAt: '$comments.createdAt',
+		car: miniCar,
+	}
+
+	return [
+		{ $match: match },
+		{
+			$facet: {
+				likedCars: [
+					{ $match: { 'likedBy.by._id': userId } },
+					{ $project: miniCar },
+					{ $sort: { make: 1 } },
+				],
+				comments: [
+					{ $match: { 'comments.author._id': userId }},
+					{ $unwind: '$comments' },
+					{ $match: { 'comments.author._id': userId }},
+					{ $project: commentProjection },
+					{ $sort: { createdAt: -1 }}
+				]
+			}
+		}
+	]
 }

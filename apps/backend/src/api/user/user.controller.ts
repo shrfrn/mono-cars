@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 
-import { UserPublicSchema } from '@car/shared'
+import { UserProfileSchema, UserPublicSchema } from '@car/shared'
 import type { UserQueryOptions, UserParams, UserBase, UserPublic } from '@car/shared'
 
 import { userService } from './user.service.js'
@@ -14,6 +14,12 @@ export async function getUsers(req: Request<{}, {}, {}, UserQueryOptions>, res: 
 export async function getUserById(req: Request<UserParams, UserPublic>, res: Response) {
 	const user = await userService.getById(req.params.id)
 	const validated = UserPublicSchema.parse(user)
+	res.json(validated)
+}
+
+export async function getUserProfile(req: Request<UserParams, UserPublic>, res: Response) {
+	const user = await userService.getUserProfile(req.params.id)
+	const validated = UserProfileSchema.parse(user)
 	res.json(validated)
 }
 

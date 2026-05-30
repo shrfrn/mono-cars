@@ -8,14 +8,20 @@ type CarLikedByStripProps = {
 export function CarLikedByStrip({ car }: CarLikedByStripProps) {
 	const alignmentHelper = "min-h-6 mt-4"
 
-	if (!car.likedBy?.length) return <div className={alignmentHelper}></div>
+	if (!car.likedBy?.length) return <div className={`${alignmentHelper} + text-xs pt-1`}>
+		<p>Be the first to like this car...</p>
+	</div>
+
+	function fallback(like) {
+		return like.by.fullname.split(' ').map(str => str.at(0)).slice(0, 2)
+	}
 
 	return <div className={`interactions flex items-center gap-3 ${alignmentHelper}`}>
 		<AvatarGroup>
 			{car.likedBy.slice(0, 3).map(like =>
 				<Avatar size='sm' key={like.by._id}>
-					<AvatarImage src={`https://www.robohash.org/${like.by._id}`}/>
-					<AvatarFallback>{like.by.fullname.at(0)}</AvatarFallback>
+					<AvatarImage src={like.by.imgUrl}/>
+					<AvatarFallback>{fallback(like)}</AvatarFallback>
 				</Avatar>
 			)}
 		</AvatarGroup>

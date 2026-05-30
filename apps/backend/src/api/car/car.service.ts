@@ -4,8 +4,8 @@ import { getAsyncStore } from '#middleware/async-store.js'
 import { getCollection, byObjectId, prepareInsert, prepareUpdate, withTransactionalSession } from '#services/db.service.js'
 import { makeId } from '#services/util.service.js'
 
-import type { Car, CarBase, CarPatch, CarQueryOptions, Comment } from '@cars/shared'
-import { CarSchema, CommentSchema } from '@cars/shared'
+import type { Car, CarBase, CarPatch, CarQueryOptions, Comment, Like } from '@cars/shared'
+import { CarSchema, CommentSchema, LikeSchema } from '@cars/shared'
 
 import { EntityNotFoundError, ForbidenError, UnauthorizedError } from '../../errors/app-errors.js'
 import { outbox } from '#events/queues.config.js'
@@ -129,19 +129,20 @@ async function removeComment(carId: string, commentId: string): Promise<void> {
 	if (modifiedCount === 0) throw new ForbidenError() // Assuming comment exists but with different author
 }
 
-async function like(carId: string): Promise<void> {
+async function like(carId: string): Promise<Like> {
 	const { authUser: owner } = getAsyncStore()!
 	if (!owner) throw new UnauthorizedError()
 
-	const like = {
+	const like = LikeSchema.parse({
 		createdAt: Date.now(),
 		by: owner,
-	}
+	})
 
 	const collection = await getCollection<MongoCar>('car')
 	const { modifiedCount } = await collection.updateOne(byObjectId(carId), { $push: { likedBy: like } })
 
 	if (modifiedCount === 0) throw new EntityNotFoundError('Car not found')
+	return like
 }
 
 async function unlike(carId: string): Promise<void> {

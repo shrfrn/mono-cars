@@ -1,6 +1,6 @@
 import z from 'zod'
 
-import type { Car, CarBaseInput, CarPatchInput, CarQueryOptions, Comment } from '@cars/shared'
+import type { Car, CarBaseInput, CarPatchInput, CarQueryOptions, Comment, Like } from '@cars/shared'
 import { CarSchema, CarPatchSchema, CarQueryOptionsSchema, CarBaseInputSchema, CommentSchema } from '@cars/shared'
 
 import { httpService } from '../http.service'
@@ -61,7 +61,7 @@ async function removeComment(carId: string, commentId: string): Promise<void> {
     await httpService.delete(BASE_URL + carId + '/comment/' + commentId)
 }
 
-async function like(carId: string): Promise<void> {
+async function like(carId: string): Promise<Like> {
 	return httpService.post(BASE_URL + carId + '/like')
 }
 

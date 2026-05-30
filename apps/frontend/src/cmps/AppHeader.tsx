@@ -14,7 +14,7 @@ export function AppHeader({ loggedInUser, setLoggedInUser }:
 		setLoggedInUser(null)
 		navigate('/login')
 	}
-    return <header className="app-header full main-layout bg-accent">
+    return <header className="app-header sticky top-0 z-10 full main-layout bg-accent">
         <div className="header-content flex justify-between items-center">
         	<h1 className="text-4xl">Cars</h1>
 			<nav className="flex gap-5 items-center">

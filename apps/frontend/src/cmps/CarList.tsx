@@ -6,15 +6,21 @@ import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader,
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { BatteryCharging, EvCharger, Fuel } from 'lucide-react'
+import { BatteryCharging, EvCharger, Fuel, Heart, MessageCircle } from 'lucide-react'
+import { Avatar, AvatarFallback, AvatarGroup, AvatarImage } from '@/components/ui/avatar'
 
 export type CarListProps = {
     cars: Car[],
     onRemoveCar: (carId: string) => void,
+    onToggleLike: (carId: string) => void,
 }
 
-export function CarList({ cars, onRemoveCar }: CarListProps) {
-    if (!cars) return <h1>Car List</h1>
+export function CarList({ cars, onRemoveCar, onToggleLike }: CarListProps) {
+	const loggedinUser = authService.getLoggedInUser()
+
+	function likedByLoggedinUser(car) {
+		return car?.likedBy?.map(like => like.by._id)?.includes(loggedinUser._id)
+	}
 
 	function canDelete(car: Car) {
 		return checkPermission({
@@ -24,6 +30,8 @@ export function CarList({ cars, onRemoveCar }: CarListProps) {
 		})
 	}
 	
+    if (!cars) return <h1>Car List</h1>
+
     return <section className="car-list my-3">
         <ul className='grid grid-cols-[repeat(auto-fill,minmax(min(100%,30ch),1fr))] gap-5'>
             {cars.map(car => { 
@@ -52,21 +60,46 @@ export function CarList({ cars, onRemoveCar }: CarListProps) {
 										{car.type}
 									</Badge>
 								</div>
-								<Separator />
 								<div className={rowClass}>
 									<span>Owner</span>
 									<span>{car.owner.fullname}</span>
 								</div>
+								<Separator />
 							</div>
+							{<div className="interactions flex items-center gap-3 min-h-6 mt-4">
+								{!!car.likedBy?.length && <AvatarGroup>
+									{car.likedBy.slice(0, 3).map(like =>
+										<Avatar size='sm' key={like.by._id}>
+											<AvatarImage src={`https://www.robohash.org/${like.by._id}`}/>
+											<AvatarFallback>{like.by.fullname.at(0)}</AvatarFallback>
+										</Avatar>
+									)}
+								</AvatarGroup>}
+
+								{!!car.likedBy?.length && <p className='text-xs'>
+									Liked by {car.likedBy[0].by.fullname} 
+										{(car.likedBy?.length > 1) && <span> and {car.likedBy.length - 1} others..</span>}</p>}
+							</div>}
 						</CardContent>
 
-						<CardFooter className='gap-1 justify-end py-2'>
-							<Link to={`${car._id}`}>
-								<Button variant="outline">Details</Button>
-							</Link>
-							<Link to={`edit/${car._id}`}>
-								<Button variant="outline">Edit</Button>
-							</Link>
+						<CardFooter className='justify-between py-2'>
+							<div className="actions flex items-center">
+								<Heart 
+									size={24} 
+									onClick={() => onToggleLike(car._id)}
+									className={`mr-1.5 hover:cursor-pointer ${likedByLoggedinUser(car) && 'fill-red-500 text-red-500 stroke-red-500'}`}/>
+								{!!car?.likedBy?.length && <span className='text-xs text-muted-foreground'>{car.comments.length}</span>}
+								<MessageCircle size={21} className='ml-4 mr-1.5 -scale-x-100'/>
+								{!!car?.comments.length && <span className='text-xs text-muted-foreground'>{car.comments.length}</span>}
+							</div>
+							<nav className='flex gap-1'>
+								<Link to={`${car._id}`}>
+									<Button variant="outline">Details</Button>
+								</Link>
+								<Link to={`edit/${car._id}`}>
+									<Button variant="outline">Edit</Button>
+								</Link>
+							</nav>
 						</CardFooter>
 					</Card>
             </li>})}

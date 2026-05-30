@@ -66,8 +66,8 @@ export async function removeComment(req: Request<CommentParams>, res: Response) 
 export async function like(req: Request<CarParams>, res: Response): Promise<void> {
 	const { id: carId } = req.params
 	
-	await carService.like(carId)
-	res.status(201).send()
+	const like = await carService.like(carId)
+	res.status(201).json(like)
 }
 
 export async function unlike(req: Request<CarParams>, res: Response) {

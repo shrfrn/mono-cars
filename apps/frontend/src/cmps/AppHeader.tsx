@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import type { MiniUser } from "@cars/shared";
 import { authService } from "../services/auth";
 import { useNavigate } from "react-router-dom";
@@ -24,10 +24,12 @@ export function AppHeader({ loggedInUser, setLoggedInUser }:
 				<NavLink to="/review">Reviews</NavLink> |
 				{!loggedInUser ? <NavLink to="/login">Login</NavLink> : <div className="loggedin-user flex gap-3">
 							<Button variant="outline" onClick={logout}>Logout</Button>
-							<Avatar title={loggedInUser?.fullname}>
-								<AvatarImage src={loggedInUser.imgUrl} />
-								<AvatarFallback>{loggedInUser.fullname.at(0)}</AvatarFallback>
-							</Avatar>
+							<Link to={`user-profile/${loggedInUser._id}`}>
+								<Avatar title={loggedInUser?.fullname}>
+									<AvatarImage src={loggedInUser.imgUrl} />
+									<AvatarFallback>{loggedInUser.fullname.at(0)}</AvatarFallback>
+								</Avatar>
+							</Link>
 						</div>}
 			</nav>
 		</div>

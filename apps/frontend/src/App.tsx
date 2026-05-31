@@ -13,6 +13,7 @@ import { useState } from 'react'
 import type { MiniUser } from '@cars/shared'
 import { authService } from './services/auth'
 import { ReviewIndex } from './pages/ReviewIndex'
+import { UserProfile } from './pages/UserProfile'
 
 function App() {
 	const [loggedInUser, setLoggedInUser] = useState<MiniUser | null>(authService.getLoggedInUser())
@@ -31,6 +32,7 @@ function App() {
 						<Route path="/car/:carId" element={<CarDetails />} />
 						<Route path="/review" element={<ReviewIndex />} />
 						<Route path="/login" element={<Login setLoggedInUser={setLoggedInUser} />} />
+						<Route path="/user-profile/:userId" element={<UserProfile />} />
 					</Routes>
 				</main>
 			</div>

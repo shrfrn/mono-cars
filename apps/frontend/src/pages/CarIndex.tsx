@@ -5,7 +5,8 @@ import { LikeSchema, type Car } from '@cars/shared'
 import type { CarQueryOptions } from '@cars/shared'
 import { carService } from "../services/car"
 import { CarList } from "../cmps/car/CarList.tsx"
-import { CarFilter } from "../cmps/CarFilter.tsx"
+import { CarFilter } from "../cmps/car/CarFilter.tsx"
+import { CarSort } from "../cmps/car/CarSort.tsx"
 import { Button } from "@/components/ui/button.tsx"
 import { authService } from "../services/auth"
 
@@ -50,7 +51,10 @@ export function CarIndex() {
 
     return <div className="car-index">
 		<header className="flex justify-between items-end py-3 mb-4">
-			<CarFilter queryOptions={carQueryOptions} setQueryOptions={setCarQueryOptions}/>
+			<div className="query-bar flex gap-2">
+				<CarFilter queryOptions={carQueryOptions} setQueryOptions={setCarQueryOptions} label="Filter"/>
+				<CarSort queryOptions={carQueryOptions} setQueryOptions={setCarQueryOptions} label="Sort"/>
+			</div>
 			<Link to="edit">
 				<Button>Add a Car</Button>
 			</Link>

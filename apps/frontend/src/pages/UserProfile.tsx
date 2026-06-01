@@ -24,11 +24,8 @@ export function UserProfile() {
 	return <div className="user-profile">
 		<div className="overflow-clip border rounded-xl mbs-6">
 			<UserProfileHero profile={profile} />
-			{/* <pre>{JSON.stringify(profile, null, 2)}</pre> */}
 		</div>
 
 		<UserProfileTabs profile={profile} />
-
-
 	</div>
 }

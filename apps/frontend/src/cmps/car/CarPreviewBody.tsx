@@ -1,4 +1,4 @@
-import type { Car } from "@cars/shared"
+import type { Car, UserPublic } from "@cars/shared"
 
 import { CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -6,6 +6,7 @@ import { Separator } from "@/components/ui/separator"
 import { CarPreviewBodyRow } from "./CarPreviewBodyRow"
 import { CarTypeBadge } from "./CarTypeBadge"
 import { CarLikedByStrip } from "./CarLikedByStrip"
+import { UserAvatar } from "../UserAvatar"
 
 type CarPreviewBodyProps = {
 	car: Car,
@@ -21,7 +22,7 @@ export function CarPreviewBody({ car }: CarPreviewBodyProps) {
 			<Separator />
 
 			<CarPreviewBodyRow label="Owner">
-				{car.owner.fullname}
+				<UserAvatar user={car.owner as UserPublic} />
 			</CarPreviewBodyRow>
 
 		</div>

@@ -11,6 +11,8 @@ const config = {
 
 const CAR_COUNT = 100
 const NO_COMMENTS_CAR_INDEX = 42
+const MS_PER_DAY = 86_400_000
+const THREE_YEARS_DAYS = Math.floor(3 * 365.25)
 
 const CAR_MAKES = [
 	'Toyota', 'Honda', 'Ford', 'BMW', 'Mercedes', 'Audi', 'Volkswagen',
@@ -18,7 +20,7 @@ const CAR_MAKES = [
 	'Volvo', 'Peugeot', 'Renault', 'Fiat', 'Chevrolet', 'Jeep',
 ]
 
-const COMMENT_SNIPPETS = [
+const COMMENT_SENTENCES = [
 	'Smooth ride on the highway.',
 	'Great fuel economy for daily commuting.',
 	'Interior feels a bit dated but reliable.',
@@ -34,17 +36,37 @@ const COMMENT_SNIPPETS = [
 	'Would buy again without hesitation.',
 	'Suspension is stiff on rough roads.',
 	'Excellent safety features for the price.',
+	'The adaptive cruise control works flawlessly in stop-and-go traffic.',
+	'Rear visibility is limited when reversing into tight spots.',
+	'Bluetooth pairing with my phone was painless on day one.',
+	'Winter tires made a huge difference on icy mornings.',
+	'Cargo space swallowed a stroller, two suitcases, and groceries with room to spare.',
+	'Paint quality still looks sharp after three years of street parking.',
+	'Dealer service was professional, though wait times can stretch past an hour.',
+	'Road noise at seventy miles per hour is noticeable but not deal-breaking.',
+	'The hybrid transition between electric and gas is nearly seamless.',
+	'Headlights are bright enough for unlit country roads.',
+	'Fuel tank range easily covers a weekend road trip without extra stops.',
+	'Steering feels light in parking lots and weights up nicely at speed.',
+	'Apple CarPlay occasionally disconnects until I unplug and replug the cable.',
+	'Back-seat legroom is tight for adults over six feet tall.',
+	'Trunk lid opens high enough that shorter drivers may need to duck.',
+	'Braking distance in the rain inspired confidence during an emergency stop test.',
+	'Climate control cools the cabin quickly even after sitting in direct sun.',
+	'Windshield wipers leave a small streak in the driver\'s line of sight.',
+	'Insurance premiums were lower than I expected for this trim level.',
+	'The manual gearbox has a satisfying throw, though first gear can feel notchy when cold.',
 ]
 
-const USER_SPECS: { username: string, role: UserRoles }[] = [
-	{ username: '1', role: 'Member' },
-	{ username: '2', role: 'Member' },
-	{ username: '3', role: 'Member' },
-	{ username: '4', role: 'Member' },
-	{ username: '5', role: 'Member' },
-	{ username: '6', role: 'Moderator' },
-	{ username: '7', role: 'Moderator' },
-	{ username: '8', role: 'Admin' },
+const USER_SPECS: { username: string, fullname: string, role: UserRoles }[] = [
+	{ username: '1', fullname: 'Maya Levi', role: 'Member' },
+	{ username: '2', fullname: 'Daniel Rosen', role: 'Member' },
+	{ username: '3', fullname: 'Noa Barak', role: 'Member' },
+	{ username: '4', fullname: 'Ethan Brooks', role: 'Member' },
+	{ username: '5', fullname: 'Lior Azulay', role: 'Member' },
+	{ username: '6', fullname: 'Rachel Kim', role: 'Moderator' },
+	{ username: '7', fullname: 'Omar Haddad', role: 'Moderator' },
+	{ username: '8', fullname: 'Tamar Shapiro', role: 'Admin' },
 ]
 
 const OWNER_WEIGHTS = [25, 20, 15, 12, 10, 8, 6, 4]
@@ -83,9 +105,9 @@ async function _clearCollections(db: ReturnType<MongoClient['db']>) {
 
 async function _insertUsers(db: ReturnType<MongoClient['db']>) {
 	const now = new Date()
-	const users = USER_SPECS.map(({ username, role }) => ({
+	const users = USER_SPECS.map(({ username, fullname, role }) => ({
 		username,
-		fullname: `User ${username}`,
+		fullname,
 		password: username,
 		imgUrl: userImgUrl(username),
 		role,
@@ -144,8 +166,8 @@ function _buildComments(count: number, miniUsers: MiniUser[]) {
 
 		comments.push({
 			id: makeId(),
-			createdAt: Date.now() - randomInt(0, 60) * 86_400_000,
-			txt: randomElement(COMMENT_SNIPPETS),
+			createdAt: randomPastTimestamp(THREE_YEARS_DAYS),
+			txt: randomCommentText(),
 			author,
 		})
 	}
@@ -179,7 +201,7 @@ function userImgUrl(username: string) {
 }
 
 function _logSummary(
-	users: { username: string, role: UserRoles, _id: string }[],
+	users: { username: string, fullname: string, role: UserRoles, _id: string }[],
 	cars: { owner: MiniUser, comments?: unknown[], likedBy?: unknown[] }[],
 ) {
 	const carsByOwner = users.map(user => ({
@@ -190,7 +212,7 @@ function _logSummary(
 
 	console.log('\nDemo data seeded successfully\n')
 	console.log('Users (password === username):')
-	users.forEach(user => console.log(`  ${user.username} — ${user.role}`))
+	users.forEach(user => console.log(`  ${user.username} (${user.fullname}) — ${user.role}`))
 	console.log('\nCars per owner:')
 	carsByOwner.forEach(({ username, role, cars: count }) => {
 		console.log(`  ${username} (${role}): ${count} cars`)
@@ -203,6 +225,27 @@ function _logSummary(
 	console.log(`  min ${Math.min(...commentCounts)}, max ${Math.max(...commentCounts)}`)
 	console.log(`  car #${NO_COMMENTS_CAR_INDEX + 1} has ${noCommentsCar.comments?.length ?? 0} comments`)
 	console.log(`  cars with likes: ${cars.filter(car => car.likedBy?.length).length}`)
+}
+
+function randomPastTimestamp(maxDaysAgo: number) {
+	const daysAgo = randomInt(0, maxDaysAgo)
+
+	return Date.now() - daysAgo * MS_PER_DAY - randomInt(0, MS_PER_DAY - 1)
+}
+
+function randomCommentText() {
+	const targetWords = randomInt(5, 250)
+	const sentences: string[] = []
+	let wordCount = 0
+
+	while (wordCount < targetWords) {
+		sentences.push(randomElement(COMMENT_SENTENCES))
+		wordCount = sentences.join(' ').split(/\s+/).filter(Boolean).length
+	}
+
+	const words = sentences.join(' ').split(/\s+/).filter(Boolean)
+
+	return words.slice(0, targetWords).join(' ')
 }
 
 function makeId(length = 5) {
